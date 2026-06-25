@@ -1,0 +1,181 @@
+{
+  "_product_id": "gid://shopify/Product/8191177064511",
+  "_retrieved_at": "2026-06-24T17:35:19.476Z",
+  "title": {
+    "type": "string",
+    "example": "Frozen Peach FOGER BIT 35K",
+    "populated": true
+  },
+  "description": {
+    "type": "string",
+    "example": "<h3 style=\"text-align: center;\"><strong><span style=\"font-family: 'Helvetica Neue';\">Foger Bit 35K Disposable Vape 5-Pack</span></strong></h3>\n<ul>\n<li class=\"MsoNormal\"><span style=\"font-family: 'Helvetica Neue';\"><strong>Flavor: </strong>The wholesale Frozen Peach Foger Bit 35K features a clear tank, long-lasting performance and sweet peach notes with a blast of ice. </span></li>\n<li class=\"MsoNormal\">\n<strong><span style=\"font-family: 'Helvetica Neue';\">Nicotine Strength: </span></strong><span style=\"font-family: 'Helvetica Neue';\">50mg</span>\n</li>\n<li class=\"MsoNormal\">\n<strong><span style=\"font-family: 'Helvetica Neue';\">Puff Count: </span></strong><span style=\"font-family: 'Helvetica Neue';\">35K Puffs Normal Mode/ 25K Puffs Boost Mode</span>\n</li>\n<li class=\"MsoNormal\"><span style=\"font-family: 'Helvetica Neue';\"><strong>Coil: </strong>0.8ohm Dual Mesh Coil</span></li>\n<li class=\"MsoNormal\"><span style=\"font-family: 'Helvetica Neue';\"><strong>Power Bank: </strong>850mAh</span></li>\n<li style=\"font-weight: bold;\" class=\"MsoNormal\"><strong><span style=\"font-family: 'Helvetica Neue';\">Adjustable Airflow</span></strong></li>\n<li style=\"font-weight: bold;\" class=\"MsoNormal\"><strong><span style=\"font-family: 'Helvetica Neue';\">3D Curved Smart Screen Display</span></strong></li>\n<li style=\"font-weight: bold;\" class=\"MsoNormal\"><strong><span style=\"font-family: 'Helvetica Neue';\">Clear Tank</span></strong></li>\n<li class=\"MsoNormal\">\n<strong>Dimensions:</strong> 98.8 x 52 x 30.5mm</li>\n<li class=\"MsoNormal\"><span style=\"font-family: 'Helvetica Neue'; color: black; background: white;\"><strong>Charging Port:</strong> Type-C Rechargeable</span></li>\n</ul>\n<h3><strong><span style=\"font-family: 'Helvetica Neue'; color: black; background: white;\">Related Links</span></strong></h3>\n<ul>\n<li><span style=\"font-weight: bold; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; font-size: 0.875rem;\"><span style=\"font-family: 'Helvetica Neue'; color: black; background: white;\"><a rel=\"noopener\" title=\"Shop ALl Disposable Vapes\" href=\"/collections/disposable-vaporizers\" target=\"_blank\">Wholesale Disposable Vapes</a></span></span></li>\n<li><a rel=\"noopener\" title=\"Wholesale Foger Vapes\" href=\"/collections/foger-vapes\" target=\"_blank\"><span style=\"font-weight: bold; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; font-size: 0.875rem;\"><span style=\"font-family: 'Helvetica Neue'; color: black; background: white;\">Wholesale Foger Vapes</span></span></a></li>\n<li><a rel=\"noopener\" title=\"Foger Switch Pro\" href=\"/collections/foger-switch-pro\" target=\"_blank\"><span style=\"font-weight: bold; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; font-size: 0.875rem;\"><span style=\"font-family: 'Helvetica Neue'; color: black; background: white;\">Foger Switch Pro Wholesale</span></span></a></li>\n</ul>",
+    "populated": true
+  },
+  "status": {
+    "type": "string",
+    "example": "ACTIVE",
+    "populated": true
+  },
+  "productType": {
+    "type": "string",
+    "example": "Disposables - Foger Bit",
+    "populated": true
+  },
+  "vendor": {
+    "type": "string",
+    "example": "Foger",
+    "populated": true
+  },
+  "handle": {
+    "type": "string",
+    "example": "frozen-peach-foger-bit-35k",
+    "populated": true
+  },
+  "tags": {
+    "type": "array",
+    "example": [
+      "Brand_Foger",
+      "disposable"
+    ],
+    "populated": true
+  },
+  "seo.title": {
+    "type": "null",
+    "example": null,
+    "populated": false
+  },
+  "seo.description": {
+    "type": "string",
+    "example": "The wholesale Frozen Peach Foger Bit 35K features a clear tank, long-lasting performance and sweet peach notes with a blast of ice. ",
+    "populated": true
+  },
+  "images": {
+    "type": "array",
+    "count": 2,
+    "example": [
+      {
+        "url": "https://cdn.shopify.com/s/files/1/0060/6869/9205/files/Foger_Bit35_Frozen-Peach-1_600x600_Render.png?v=1780585105",
+        "altText": "Frozen Peach FOGER BIT 35K for Wholesale"
+      }
+    ],
+    "populated": true
+  },
+  "options": {
+    "type": "array",
+    "count": 3,
+    "example": [
+      {
+        "name": "Customer Group",
+        "position": 1,
+        "values": [
+          "Wholesale A",
+          "Wholesale B (Low)",
+          "Chain Store",
+          "Distro A",
+          "Distro B (Low)",
+          "Master Distro Price"
+        ]
+      },
+      {
+        "name": "Nicotine",
+        "position": 2,
+        "values": [
+          "50mg"
+        ]
+      },
+      {
+        "name": "Size",
+        "position": 3,
+        "values": [
+          "5 Pack"
+        ]
+      }
+    ],
+    "populated": true
+  },
+  "variants": {
+    "type": "array",
+    "count": 6,
+    "example": [
+      {
+        "sku": "63777-5",
+        "price": "55.00",
+        "selectedOptions": [
+          {
+            "name": "Customer Group",
+            "value": "Wholesale A"
+          },
+          {
+            "name": "Nicotine",
+            "value": "50mg"
+          },
+          {
+            "name": "Size",
+            "value": "5 Pack"
+          }
+        ]
+      },
+      {
+        "sku": "63777-5",
+        "price": "55.00",
+        "selectedOptions": [
+          {
+            "name": "Customer Group",
+            "value": "Wholesale B (Low)"
+          },
+          {
+            "name": "Nicotine",
+            "value": "50mg"
+          },
+          {
+            "name": "Size",
+            "value": "5 Pack"
+          }
+        ]
+      }
+    ],
+    "populated": true
+  },
+  "metafields": {
+    "order_limits.order_maximum": {
+      "type": "null",
+      "example": null,
+      "populated": false
+    },
+    "filter.built_in_usa": {
+      "type": "null",
+      "example": null,
+      "populated": false
+    },
+    "filter.product_category": {
+      "type": "single_line_text_field",
+      "example": "Disposable Vapes",
+      "populated": true
+    },
+    "filter.flavor": {
+      "type": "list.single_line_text_field",
+      "example": "[\"Peach\"]",
+      "populated": true
+    },
+    "filter.type": {
+      "type": "single_line_text_field",
+      "example": "Foger Bit 35K",
+      "populated": true
+    },
+    "filter.product_brand": {
+      "type": "single_line_text_field",
+      "example": "Foger",
+      "populated": true
+    },
+    "filter.product_line": {
+      "type": "single_line_text_field",
+      "example": "Foger Bit",
+      "populated": true
+    },
+    "custom.contains": {
+      "type": "list.single_line_text_field",
+      "example": "[\"Nicotine Option\"]",
+      "populated": true
+    }
+  }
+}

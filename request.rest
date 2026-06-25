@@ -1,0 +1,89 @@
+@port = 3000
+
+### BigCommerce — Test (first 5 products + customers)
+GET http://localhost:{{port}}/api/test/bigcommerce
+
+###
+
+### Shopify — Field Validation (validate all required fields on test product)
+GET http://localhost:{{port}}/api/test/field-validation
+
+###
+
+### Shopify → BigCommerce — Translate Product (map test product to BC shape)
+GET http://localhost:{{port}}/api/test/translate-product
+
+###
+
+### BigCommerce — List Customer Groups
+GET http://localhost:{{port}}/api/bigcommerce/customer-groups
+
+###
+
+### BigCommerce — Create Customer Group
+POST http://localhost:{{port}}/api/bigcommerce/customer-groups
+Content-Type: application/json
+
+{
+  "name": "Master Distro Price",
+  "is_default": false
+}
+
+###
+
+### BigCommerce — List Categories
+GET http://localhost:{{port}}/api/bigcommerce/categories
+
+###
+
+### BigCommerce — List Brands
+GET http://localhost:{{port}}/api/bigcommerce/brands
+
+###
+
+### BigCommerce — Inventory Locations
+GET http://localhost:{{port}}/api/bigcommerce/inventory/locations
+
+###
+
+### BigCommerce — Inventory Items (all, or filter: ?sku=ABC-001)
+GET http://localhost:{{port}}/api/bigcommerce/inventory/items
+
+###
+
+### BigCommerce — Set Absolute Inventory
+PUT http://localhost:{{port}}/api/bigcommerce/inventory/absolute
+Content-Type: application/json
+
+{
+  "items": [
+    { "sku": "ABC-001", "location_id": 1, "quantity": 50 }
+  ]
+}
+
+###
+
+### BigCommerce — Relative Inventory Adjustment
+POST http://localhost:{{port}}/api/bigcommerce/inventory/relative
+Content-Type: application/json
+
+{
+  "items": [
+    { "sku": "ABC-001", "location_id": 1, "quantity": -5 }
+  ]
+}
+
+###
+
+### Migrate Images — Shopify → BigCommerce (replace 123 with real BC product ID)
+GET http://localhost:{{port}}/api/test/migrate-images?bcProductId=123
+
+###
+
+### Migrate Product — Shopify → BigCommerce (sample product)
+POST http://localhost:{{port}}/api/migrate/product
+Content-Type: application/json
+
+{
+  "shopifyProductId": "gid://shopify/Product/8191177261119"
+}
