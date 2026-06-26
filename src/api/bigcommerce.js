@@ -25,6 +25,8 @@ exports.makeRequest = async (method, path, { params, data } = {}) => {
   } catch (error) {
     const status = error.response?.status;
     const message = error.response?.data?.title || error.message;
-    throw new Error(`BigCommerce API error [${status}]: ${message}`);
+    const errors = error.response?.data?.errors;
+    const detail = errors ? ` — ${JSON.stringify(errors)}` : "";
+    throw new Error(`BigCommerce API error [${status}]: ${message}${detail}`);
   }
 };

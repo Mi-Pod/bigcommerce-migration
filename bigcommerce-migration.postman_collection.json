@@ -1,0 +1,1053 @@
+{
+  "info": {
+    "name": "BigCommerce Migration",
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "description": "Endpoints for the Shopify → BigCommerce migration service.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Test",
+      "item": [
+        {
+          "name": "BC — Connection (first 5 products + customers)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/bigcommerce",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "bigcommerce"]
+            }
+          }
+        },
+        {
+          "name": "Shopify — Field Validation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/field-validation",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "field-validation"]
+            }
+          }
+        },
+        {
+          "name": "Shopify → BC — Translate Product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/translate-product",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "translate-product"]
+            }
+          }
+        },
+        {
+          "name": "Shopify → BC — Migrate Images",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/migrate-images?bcProductId=123",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "migrate-images"],
+              "query": [
+                {
+                  "key": "bcProductId",
+                  "value": "123",
+                  "description": "BigCommerce product ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Shopify — Extract Sample Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/extract-customers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "extract-customers"]
+            }
+          }
+        },
+        {
+          "name": "Shopify → BC — Compose Customer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/compose-customer?id=2852474519615",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "compose-customer"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "2852474519615",
+                  "description": "Shopify customer numeric ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "BC — Customer (full: customer + addresses + metafields)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/bc-customer?id=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "bc-customer"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "BigCommerce customer ID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "BC — Product Metafields",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/product-metafields?bcProductId=123",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "product-metafields"],
+              "query": [
+                {
+                  "key": "bcProductId",
+                  "value": "123",
+                  "description": "BigCommerce product ID"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "BigCommerce / Categories",
+      "item": [
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/categories/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "categories", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "18"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Disposables\",\n  \"parent_id\": 0,\n  \"sort_order\": 0,\n  \"is_visible\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Disposables\",\n  \"sort_order\": 1,\n  \"is_visible\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/categories/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "categories", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "18"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/categories/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "categories", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "18"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "BigCommerce / Brands",
+      "item": [
+        {
+          "name": "List Brands",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/brands",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "brands"]
+            }
+          }
+        },
+        {
+          "name": "Get Brand",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/brands/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "brands", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Brand",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Foger\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/brands",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "brands"]
+            }
+          }
+        },
+        {
+          "name": "Update Brand",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Foger\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/brands/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "brands", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Brand",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/brands/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "brands", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "BigCommerce / Customers",
+      "item": [
+        {
+          "name": "List Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/customers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "customers"]
+            }
+          }
+        },
+        {
+          "name": "Get Customer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/customers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "customers", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Jane\",\n  \"last_name\": \"Doe\",\n  \"email\": \"jane.doe@example.com\",\n  \"phone\": \"+15551234567\",\n  \"company\": \"ACME Inc.\",\n  \"accepts_marketing_emails\": false,\n  \"accepts_product_review_abandoned_cart_emails\": false,\n  \"authentication\": { \"force_reset\": true },\n  \"channel_ids\": [1]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/customers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "customers"]
+            }
+          }
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+15559876543\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/customers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "customers", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Delete Customer",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/customers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "customers", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "BigCommerce / Customer Groups",
+      "item": [
+        {
+          "name": "List Customer Groups",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/customer-groups",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "customer-groups"]
+            }
+          }
+        },
+        {
+          "name": "Get Customer Group",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/customer-groups/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "customer-groups", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Customer Group",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Master Distro Price\",\n  \"is_default\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/customer-groups",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "customer-groups"]
+            }
+          }
+        },
+        {
+          "name": "Update Customer Group",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Master Distro Price\",\n  \"is_default\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/customer-groups/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "customer-groups", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Customer Group",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/customer-groups/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "customer-groups", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "BigCommerce / Inventory",
+      "item": [
+        {
+          "name": "Locations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/inventory/locations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "inventory", "locations"]
+            }
+          }
+        },
+        {
+          "name": "Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/inventory/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "inventory", "items"]
+            }
+          }
+        },
+        {
+          "name": "Set Absolute",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"sku\": \"ABC-001\", \"location_id\": 1, \"quantity\": 50 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/inventory/absolute",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "inventory", "absolute"]
+            }
+          }
+        },
+        {
+          "name": "Adjust Relative",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"sku\": \"ABC-001\", \"location_id\": 1, \"quantity\": -5 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/inventory/relative",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "inventory", "relative"]
+            }
+          }
+        },
+        {
+          "name": "Summary (locations + top 5 items)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/inventory",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "inventory"]
+            }
+          }
+        },
+        {
+          "name": "Wipe (set all to 0)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/inventory/wipe",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "inventory", "wipe"]
+            }
+          }
+        },
+        {
+          "name": "Set Quantity (absolute/5)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/inventory/set/absolute/5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "inventory", "set", "absolute", "5"]
+            }
+          }
+        },
+        {
+          "name": "Set Quantity (relative/rand)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bigcommerce/inventory/set/relative/rand",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bigcommerce", "inventory", "set", "relative", "rand"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Migrate",
+      "item": [
+        {
+          "name": "Migrate Customer (single)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shopifyCustomerId\": \"2147081748549\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/customers/single",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "customers", "single"]
+            }
+          }
+        },
+        {
+          "name": "Products — Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/products/count",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "products", "count"]
+            }
+          }
+        },
+        {
+          "name": "Products — Bulk Import",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"batch_size\": 10,\n  \"skip\": 0,\n  \"max_batches\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/products/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "products", "bulk"]
+            }
+          }
+        },
+        {
+          "name": "Migrate Product (single)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shopifyProductId\": \"gid://shopify/Product/8187070578751\",\n  \"outputJson\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/products/single",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "products", "single"]
+            }
+          }
+        },
+        {
+          "name": "Nav — Compare (BC vs Composed)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/navigation/compare",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "navigation", "compare"]
+            }
+          }
+        },
+        {
+          "name": "Nav — Migrate to BC",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/navigation/migrate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "navigation", "migrate"]
+            }
+          }
+        },
+        {
+          "name": "Nav — Reset (Undo)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/navigation/reset",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "navigation", "reset"]
+            }
+          }
+        },
+        {
+          "name": "Nav — Validate All Known Menus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/navigation/validate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "navigation", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Nav — Compose BC Payload",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/navigation/compose",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "navigation", "compose"]
+            }
+          }
+        },
+        {
+          "name": "Nav — Extract (sidebar-menu / Mobile)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/navigation/sidebar-menu",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "navigation", "sidebar-menu"]
+            }
+          }
+        },
+        {
+          "name": "Nav — Extract (dsk-nav-21 / Desktop)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/navigation/dsk-nav-21",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "navigation", "dsk-nav-21"]
+            }
+          }
+        },
+        {
+          "name": "Shopify — Fetch All Collections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/shopify/collections",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "shopify", "collections"]
+            }
+          }
+        },
+        {
+          "name": "Shopify — Collection Visibility Map",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/shopify/collection-visibility-map",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "shopify", "collection-visibility-map"]
+            }
+          }
+        },
+        {
+          "name": "Shopify — Nav Collection Map",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/shopify/nav-collection-map",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "shopify", "nav-collection-map"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Content Export",
+      "item": [
+        {
+          "name": "Metaobjects — List Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/metaobjects/types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "metaobjects", "types"]
+            }
+          }
+        },
+        {
+          "name": "Metaobjects — Export One",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/metaobjects/one?type=faq_item",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "metaobjects", "one"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "faq_item",
+                  "description": "Metaobject type slug (get from /types)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Metaobjects — Bulk Export",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": null,\n  \"batch_size\": 50,\n  \"skip\": 0,\n  \"max_batches\": 0\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/content/metaobjects/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "metaobjects", "bulk"]
+            }
+          }
+        },
+        {
+          "name": "Files — Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/files/count",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "files", "count"]
+            }
+          }
+        },
+        {
+          "name": "Files — Export One",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/files/one?id=gid://shopify/MediaImage/123456789",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "files", "one"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "gid://shopify/MediaImage/123456789",
+                  "description": "Shopify File GID (MediaImage, Video, or GenericFile)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Files — Bulk Export",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"batch_size\": 50,\n  \"skip\": 0,\n  \"max_batches\": 0\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/content/files/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "files", "bulk"]
+            }
+          }
+        },
+        {
+          "name": "Articles — Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/articles/count",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "articles", "count"]
+            }
+          }
+        },
+        {
+          "name": "Articles — Export One",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/articles/one?id=gid://shopify/Article/123456789",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "articles", "one"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "gid://shopify/Article/123456789",
+                  "description": "Shopify Article GID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Articles — Bulk Export",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"batch_size\": 50,\n  \"skip\": 0,\n  \"max_batches\": 0\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/content/articles/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "articles", "bulk"]
+            }
+          }
+        },
+        {
+          "name": "Pages — Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/pages/count",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "pages", "count"]
+            }
+          }
+        },
+        {
+          "name": "Pages — Export One",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/pages/one?id=gid://shopify/OnlineStorePage/123456789",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "pages", "one"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "gid://shopify/OnlineStorePage/123456789",
+                  "description": "Shopify Page GID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pages — Bulk Export",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"batch_size\": 50,\n  \"skip\": 0,\n  \"max_batches\": 0\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/content/pages/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "pages", "bulk"]
+            }
+          }
+        },
+        {
+          "name": "Menus — Export One",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/menus/one?id=gid://shopify/Menu/123456789",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "menus", "one"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "gid://shopify/Menu/123456789",
+                  "description": "Shopify Menu GID"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Menus — Bulk Export",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/content/menus/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "menus", "bulk"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

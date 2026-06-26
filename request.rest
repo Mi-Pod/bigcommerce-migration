@@ -80,10 +80,36 @@ GET http://localhost:{{port}}/api/test/migrate-images?bcProductId=123
 
 ###
 
+### Test — Inventory: Get locations + top 5 items
+GET http://localhost:{{port}}/api/test/inventory
+
+###
+
+### Test — Inventory: Wipe all (set every SKU/location to 0)
+GET http://localhost:{{port}}/api/test/inventory/wipe
+
+###
+
+### Test — Inventory: Set absolute (replace 5 with desired quantity)
+GET http://localhost:{{port}}/api/test/inventory/set/absolute/5
+
+###
+
+### Test — Inventory: Adjust relative (number or "rand" for random 1–5)
+GET http://localhost:{{port}}/api/test/inventory/set/relative/rand
+
+###
+
+### BigCommerce — Get product metafields (replace 123 with real BC product ID)
+GET http://localhost:{{port}}/api/test/product-metafields?bcProductId=123
+
+###
+
 ### Migrate Product — Shopify → BigCommerce (sample product)
 POST http://localhost:{{port}}/api/migrate/product
 Content-Type: application/json
 
 {
-  "shopifyProductId": "gid://shopify/Product/8191177261119"
+  "shopifyProductId": "gid://shopify/Product/8187070578751",
+  "outputJson": false
 }

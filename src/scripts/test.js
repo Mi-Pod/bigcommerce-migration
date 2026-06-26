@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const shopify = require("../graphql/shopify/products");
+const { collectMetafields } = shopify;
 const imageService = require("../services/bigcommerce/image.service");
 const CUSTOMER_GROUPS = require("../config/customer-groups");
 const logger = require("../utils/logger");
@@ -46,7 +47,7 @@ exports.fieldValidation = async () => {
 
   const variants = p.variants.edges.map((e) => e.node);
   const images = p.images.edges.map((e) => e.node);
-  const metafields = p.metafields?.edges?.map((e) => e.node) ?? [];
+  const metafields = collectMetafields(p);
 
   const field = (value) => ({
     type: detectType(value),
@@ -160,7 +161,7 @@ exports.translateProduct = async () => {
 
   const variants = p.variants.edges.map((e) => e.node);
   const images = p.images.edges.map((e) => e.node);
-  const metafields = p.metafields?.edges?.map((e) => e.node) ?? [];
+  const metafields = collectMetafields(p);
 
   // Shopify option 1 (position 1) is "Customer Price Group" — a pricing
   // dimension, not a physical attribute. Separate it before building BC variants.

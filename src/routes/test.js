@@ -3,7 +3,9 @@ const router = express.Router();
 const logger = require("../utils/logger");
 const productService = require("../services/bigcommerce/product.service");
 const customerService = require("../services/bigcommerce/customer.service");
+const { makeRequest } = require("../api/bigcommerce");
 const { fieldValidation, translateProduct, migrateImages } = require("../scripts/test");
+const { extractSampleCustomers, composeCustomer } = require("../scripts/customers");
 
 router.get("/bigcommerce", async (req, res) => {
   const reqId = "bc-test";
@@ -62,6 +64,67 @@ router.get("/migrate-images", async (req, res) => {
     res.json(result);
   } catch (error) {
     logger.failure("migrate-images", "Image migration failed", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/extract-customers", async (req, res) => {
+  try {
+    const result = await extractSampleCustomers();
+    res.json(result);
+  } catch (error) {
+    logger.failure("extract-customers", "Customer extraction failed", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/test/compose-customer?id=2852474519615
+router.get("/compose-customer", async (req, res) => {
+  const { id } = req.query;
+  if (!id) return res.status(400).json({ error: "id query param is required" });
+  try {
+    const result = await composeCustomer(id);
+    res.json(result);
+  } catch (error) {
+    logger.failure("compose-customer", "Customer composition failed", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/test/bc-customer?id=123
+router.get("/bc-customer", async (req, res) => {
+  const { id } = req.query;
+  if (!id) {
+    return res.status(400).json({ error: "id query param is required" });
+  }
+  try {
+    const [customerRes, addressRes, metafieldRes] = await Promise.all([
+      customerService.getOne(id),
+      makeRequest("GET", "/v3/customers/addresses", { params: { "customer_id:in": id } }),
+      makeRequest("GET", `/v3/customers/${id}/metafields`),
+    ]);
+    res.json({
+      customer: customerRes.data?.[0] ?? null,
+      addresses: addressRes.data ?? [],
+      metafields: metafieldRes.data ?? [],
+    });
+  } catch (error) {
+    logger.failure("bc-customer", "BC customer fetch failed", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/test/product-metafields?bcProductId=123
+router.get("/product-metafields", async (req, res) => {
+  const { bcProductId } = req.query;
+  if (!bcProductId) {
+    return res.status(400).json({ error: "bcProductId query param is required" });
+  }
+  try {
+    const result = await makeRequest("GET", `/v3/catalog/products/${bcProductId}/metafields`);
+    res.json({ bc_product_id: Number(bcProductId), metafields: result.data ?? [] });
+  } catch (error) {
+    logger.failure("product-metafields", "Metafield fetch failed", error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -1,4 +1,4 @@
-const {shopifyQl} = require("../../api/shopify");
+const {shopifyQl} = require("../api/shopify");
 
 exports.listAll = async () => {};
 
