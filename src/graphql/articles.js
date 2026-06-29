@@ -27,8 +27,7 @@ exports.getPage = async (first, after = null) => {
             updatedAt
             tags
             body
-            bodySummary
-            author { name email }
+            author { name }
             image { url altText }
             blog { id handle title }
           }
@@ -62,8 +61,7 @@ exports.getOne = async (id) => {
         updatedAt
         tags
         body
-        bodySummary
-        author { name email }
+        author { name }
         image { url altText }
         blog { id handle title }
       }

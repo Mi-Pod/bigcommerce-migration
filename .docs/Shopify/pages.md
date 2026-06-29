@@ -8,10 +8,10 @@ Pages are static content pages in the Shopify Online Store (e.g. "About Us", "Co
 
 - `isPublished` — boolean; controls storefront visibility
 - `body` — HTML string; the page's main content
-- `bodySummary` — plain-text excerpt (auto-generated, max 255 chars)
-- `author` — string (not a sub-object); the name of the page creator
 - `templateSuffix` — optional Liquid template variant (e.g. `"contact"` → uses `page.contact.liquid`); null means default `page.liquid`
 - `publishedAt` — ISO 8601 string; can be in the future for scheduled publish
+- `author` — **does not exist** on `Page` type in Admin GraphQL; omit from queries
+- `bodySummary` — **does not exist** on `Page` type in Admin GraphQL; omit from queries
 
 ---
 
@@ -40,9 +40,7 @@ query GetPagesPage($first: Int!, $after: String) {
         publishedAt
         createdAt
         updatedAt
-        author
         body
-        bodySummary
         templateSuffix
       }
     }
@@ -66,9 +64,7 @@ query GetPage($id: ID!) {
     publishedAt
     createdAt
     updatedAt
-    author
     body
-    bodySummary
     templateSuffix
   }
 }

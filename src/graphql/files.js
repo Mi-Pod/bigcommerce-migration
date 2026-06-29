@@ -28,8 +28,6 @@ exports.getPage = async (first, after = null) => {
               image { url width height }
             }
             ... on Video {
-              filename
-              mimeType
               sources { url mimeType format height width }
             }
             ... on GenericFile {
@@ -64,7 +62,7 @@ exports.getOne = async (id) => {
           image { url width height }
         }
         ... on Video {
-          id alt createdAt updatedAt fileStatus filename mimeType
+          id alt createdAt updatedAt fileStatus
           sources { url mimeType format height width }
         }
         ... on GenericFile {

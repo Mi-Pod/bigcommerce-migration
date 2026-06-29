@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const shopify = require("../graphql/shopify/products");
+const shopify = require("../graphql/products");
 const { collectMetafields } = shopify;
 const imageService = require("../services/bigcommerce/image.service");
 const CUSTOMER_GROUPS = require("../config/customer-groups");

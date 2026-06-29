@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const shopify = require("../graphql/shopify/customers");
+const shopify = require("../graphql/customers");
 const customerService = require("../services/bigcommerce/customer.service");
 const { makeRequest } = require("../api/bigcommerce");
 const logger = require("../utils/logger");
@@ -70,7 +70,7 @@ const saveJson = (filename, data) => {
 //    addresses, collects metafields, and saves the result to
 //    migration/customers/composed_{id}.json
 // ─────────────────────────────────────────────────────────────
-exports.composeCustomer = async (shopifyCustomerId) => {
+exports.composeCustomer = async (shopifyCustomerId, { save = true } = {}) => {
   const reqId = "compose-customer";
   logger.notice(reqId, `Composing BC payload for Shopify customer: ${shopifyCustomerId}`);
 
@@ -159,8 +159,10 @@ exports.composeCustomer = async (shopifyCustomerId) => {
     metafields: bcMetafields,
   };
 
-  const filepath = saveJson(`composed_${numericId}.json`, composed);
-  logger.success(reqId, `Saved → ${filepath}`);
+  if (save) {
+    const filepath = saveJson(`composed_${numericId}.json`, composed);
+    logger.success(reqId, `Saved → ${filepath}`);
+  }
   logger.info(
     reqId,
     `Addresses: ${allAddresses.length} raw → ${deduped.length} after dedup | Metafields: ${bcMetafields.length}`
@@ -174,12 +176,12 @@ exports.composeCustomer = async (shopifyCustomerId) => {
 //    Composes payload, checks for existing BC customer by email,
 //    creates customer + addresses + metafields, saves result JSON.
 // ─────────────────────────────────────────────────────────────
-exports.migrateCustomer = async (shopifyCustomerId) => {
+exports.migrateCustomer = async (shopifyCustomerId, { save = true } = {}) => {
   const reqId = "migrate-customer";
   logger.notice(reqId, `Migrating Shopify customer: ${shopifyCustomerId}`);
 
-  // Compose payload (fetches from Shopify + saves composed JSON)
-  const composed = await exports.composeCustomer(shopifyCustomerId);
+  // Compose payload (fetches from Shopify + optionally saves composed JSON)
+  const composed = await exports.composeCustomer(shopifyCustomerId, { save });
   const { customer: bcCustomer, addresses, metafields } = composed;
   const numericId = String(composed._shopify_numeric_id);
 
@@ -202,19 +204,23 @@ exports.migrateCustomer = async (shopifyCustomerId) => {
   const bcId = createRes.data[0].id;
   logger.success(reqId, `Customer created — BC id ${bcId}`);
 
-  // Create addresses
-  let bcAddresses = [];
-  if (addresses.length) {
-    logger.info(reqId, `Creating ${addresses.length} address(es)`);
-    const addrRes = await makeRequest("POST", "/v3/customers/addresses", {
-      data: addresses.map((a) => ({ ...a, customer_id: bcId })),
-    });
-    bcAddresses = addrRes.data ?? [];
-    logger.success(reqId, `${bcAddresses.length} address(es) created`);
-  }
+  // Sync addresses — chunked to respect BC's 10-item batch limit
+  const addrSync = await exports.syncCustomerAddresses(shopifyCustomerId, bcId);
 
   // Create metafields — one POST per entry (BC requires individual calls)
   const bcMetafields = [];
+
+  // Migration mapping — stores Shopify ID in BC for reverse lookup
+  try {
+    const mfRes = await makeRequest("POST", `/v3/customers/${bcId}/metafields`, {
+      data: { namespace: "shopify", key: "customer_id", value: numericId, permission_set: "read" },
+    });
+    bcMetafields.push(mfRes.data);
+    logger.trace(reqId, `Metafield: shopify.customer_id = ${numericId}`);
+  } catch (err) {
+    logger.warning(reqId, `Metafield shopify.customer_id skipped: ${err.message}`);
+  }
+
   for (const m of metafields) {
     try {
       const mfRes = await makeRequest("POST", `/v3/customers/${bcId}/metafields`, { data: m });
@@ -232,14 +238,189 @@ exports.migrateCustomer = async (shopifyCustomerId) => {
     _action: "created",
     bc_customer_id: bcId,
     customer: createRes.data[0],
-    addresses: bcAddresses,
+    addresses: addrSync.addresses,
     metafields: bcMetafields,
   };
 
-  const filepath = saveJson(`migrated_${numericId}.json`, result);
-  logger.notice(reqId, `Complete — BC id ${bcId} | ${filepath}`);
+  if (save) {
+    const filepath = saveJson(`migrated_${numericId}.json`, result);
+    logger.notice(reqId, `Complete — BC id ${bcId} | ${filepath}`);
+  } else {
+    logger.notice(reqId, `Complete — BC id ${bcId}`);
+  }
 
   return result;
+};
+
+// ─────────────────────────────────────────────────────────────
+// SYNC CUSTOMER ADDRESSES
+//    Fetches addresses from Shopify, deduplicates, and upserts to BC
+//    in chunks of ≤10 (BC batch limit). Resolves BC customer from the
+//    shopify_customer_id metafield mapping when bcCustomerId is omitted.
+// ─────────────────────────────────────────────────────────────
+const ADDRESS_BATCH_LIMIT = 10;
+
+exports.syncCustomerAddresses = async (shopifyCustomerId, bcCustomerId = null) => {
+  const reqId = "sync-customer-addresses";
+
+  const data = await shopify.getOne(shopifyCustomerId);
+  const c = data?.customer;
+  if (!c) throw new Error(`Customer not found: ${shopifyCustomerId}`);
+
+  // Resolve BC customer ID — look up by email when not provided
+  if (!bcCustomerId) {
+    const existingRes = await customerService.getList({ "email:in": c.email });
+    if (!existingRes.data?.length) throw new Error(`No BC customer found for email: ${c.email}`);
+    bcCustomerId = existingRes.data[0].id;
+    logger.info(reqId, `Resolved BC customer id ${bcCustomerId} via email (${c.email})`);
+  }
+
+  // Compose and deduplicate addresses
+  const allAddresses = c.addresses ?? [];
+  const defaultId = c.defaultAddress?.id;
+  const sorted = defaultId
+    ? [allAddresses.find((a) => a.id === defaultId), ...allAddresses.filter((a) => a.id !== defaultId)].filter(Boolean)
+    : allAddresses;
+  const deduped = deduplicateAddresses(sorted);
+
+  const bcAddresses = deduped.map((addr) => {
+    const { first_name, last_name } = resolveName(addr.firstName, addr.lastName);
+    return {
+      customer_id: bcCustomerId,
+      first_name,
+      last_name,
+      ...(addr.company && { company: addr.company }),
+      address1: addr.address1 || "",
+      ...(addr.address2 && { address2: addr.address2 }),
+      city: addr.city || "",
+      state_or_province: addr.province || "",
+      state_or_province_code: addr.provinceCode || "",
+      country_code: addr.countryCodeV2 || "",
+      postal_code: addr.zip || "",
+      ...(addr.phone && { phone: addr.phone }),
+      address_type: addr.company ? "commercial" : "residential",
+    };
+  });
+
+  // POST in chunks of ≤10 to respect BC's batch size limit
+  const created = [];
+  for (let i = 0; i < bcAddresses.length; i += ADDRESS_BATCH_LIMIT) {
+    const chunk = bcAddresses.slice(i, i + ADDRESS_BATCH_LIMIT);
+    const res = await makeRequest("POST", "/v3/customers/addresses", { data: chunk });
+    created.push(...(res.data ?? []));
+  }
+
+  logger.success(reqId, `${created.length} address(es) synced for BC customer ${bcCustomerId}`);
+  return { bc_customer_id: bcCustomerId, addresses_created: created.length, addresses: created };
+};
+
+// ─────────────────────────────────────────────────────────────
+// COUNT CUSTOMERS
+// ─────────────────────────────────────────────────────────────
+exports.countCustomers = async () => {
+  const count = await shopify.getCount();
+  logger.notice("bulk-migrate-customers", `Shopify customer count: ${count}`);
+  return { count };
+};
+
+// ─────────────────────────────────────────────────────────────
+// IMPORT CUSTOMERS — Cursor-paginated bulk migration
+//    Iterates all Shopify customers in batches, calls migrateCustomer
+//    for each, skips DISABLED accounts, saves bulk results JSON.
+// ─────────────────────────────────────────────────────────────
+exports.importCustomers = async ({ batch_size = 50, skip = 0, max_batches = 0, save = true } = {}) => {
+  const reqId = "bulk-migrate-customers";
+
+  logger.notice(reqId, `Starting bulk import — batch_size: ${batch_size}, skip: ${skip}, max_batches: ${max_batches || "∞"}`);
+
+  let cursor = null;
+  if (skip > 0) {
+    logger.info(reqId, `Advancing cursor past ${skip} customers...`);
+    cursor = await shopify.advanceCursor(skip);
+    logger.info(reqId, `Cursor advanced — starting from customer ${skip + 1}`);
+  }
+
+  const results = [];
+  let batchNum = 0;
+  let hasNextPage = true;
+  let totalDisabled = 0;
+  let totalZeroSpend = 0;
+
+  // Customers created after this date are always migrated regardless of spend
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+  while (hasNextPage) {
+    if (max_batches > 0 && batchNum >= max_batches) {
+      logger.info(reqId, `Reached max_batches limit (${max_batches}) — stopping`);
+      break;
+    }
+
+    batchNum++;
+    logger.info(reqId, `Batch ${batchNum}${max_batches ? `/${max_batches}` : ""} — fetching ${batch_size} customer stubs...`);
+
+    const page = await shopify.getPage(batch_size, cursor);
+    cursor = page.endCursor;
+    hasNextPage = page.hasNextPage;
+
+    const active = page.nodes.filter((n) => n.state !== "DISABLED");
+    const skippedDisabled = page.nodes.length - active.length;
+    totalDisabled += skippedDisabled;
+    if (skippedDisabled > 0) logger.info(reqId, `Batch ${batchNum}: skipping ${skippedDisabled} disabled customer(s)`);
+
+    const eligible = active.filter((n) => {
+      const hasSpend = parseFloat(n.amountSpent?.amount || 0) > 0;
+      const isRecent = new Date(n.createdAt) >= sixMonthsAgo;
+      return hasSpend || isRecent;
+    });
+    const skippedZeroSpend = active.length - eligible.length;
+    totalZeroSpend += skippedZeroSpend;
+    if (skippedZeroSpend > 0) logger.info(reqId, `Batch ${batchNum}: skipping ${skippedZeroSpend} customer(s) with $0 spend`);
+    logger.info(reqId, `Batch ${batchNum}: ${eligible.length} customers to migrate`);
+
+    for (const stub of eligible) {
+      const label = `${stub.firstName} ${stub.lastName}`.trim() || stub.email;
+      logger.info(reqId, `  Migrating: "${label}" (${stub.id})`);
+      try {
+        const result = await exports.migrateCustomer(stub.id, { save });
+        results.push({
+          status: "success",
+          shopify_id: stub.id,
+          email: stub.email,
+          bc_customer_id: result.bc_customer_id,
+          action: result._action,
+        });
+        logger.success(reqId, `  ✓ "${label}" → bc_id ${result.bc_customer_id} (${result._action})`);
+      } catch (err) {
+        results.push({ status: "failed", shopify_id: stub.id, email: stub.email, error: err.message });
+        logger.failure(reqId, `  ✗ "${label}"`, err);
+      }
+    }
+  }
+
+  const succeeded = results.filter((r) => r.status === "success").length;
+  const failed = results.filter((r) => r.status === "failed").length;
+
+  logger.notice(reqId, `Bulk import complete — ${succeeded} succeeded, ${failed} failed, ${totalDisabled} disabled skipped, ${totalZeroSpend} zero-spend skipped across ${batchNum} batch(es)`);
+
+  const summary = {
+    params: { batch_size, skip, max_batches },
+    batches_processed: batchNum,
+    total_processed: results.length,
+    succeeded,
+    failed,
+    disabled_skipped: totalDisabled,
+    zero_spend_skipped: totalZeroSpend,
+    last_cursor: cursor,
+    results,
+  };
+
+  if (save) {
+    saveJson("bulk-import-results.json", summary);
+    logger.success(reqId, `Results saved → migration/customers/bulk-import-results.json`);
+  }
+
+  return summary;
 };
 
 // ─────────────────────────────────────────────────────────────

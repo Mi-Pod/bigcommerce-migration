@@ -1,6 +1,6 @@
 # Shopify Customer Source Schema
 
-**Service:** `src/graphql/shopify/customers.js`  
+**Service:** `src/graphql/customers.js`  
 **API version:** `2026-04` — all fields below confirmed compatible. See [api-version.md](api-version.md).  
 Source data fetched via the Shopify Admin GraphQL API (`/admin/api/2026-04/graphql.json`).
 
@@ -190,7 +190,7 @@ Fetched via aliased singular `metafield(namespace, key)` — same pattern as pro
 | `configuration` | `disable_cart_buttons` | `mf_configuration_disable_cart_buttons` | Per-customer cart button visibility flag |
 | `custom` | `purchasing_list_subscription` | `mf_custom_purchasing_list_subscription` | Purchasing list subscription status |
 
-All 6 are fetched as aliased singular `metafield(namespace, key)` calls. Only non-null values are written to BC. To add more, append to `CUSTOMER_METAFIELD_DEFS` in `src/graphql/shopify/customers.js`.
+All 6 are fetched as aliased singular `metafield(namespace, key)` calls. Only non-null values are written to BC. To add more, append to `CUSTOMER_METAFIELD_DEFS` in `src/graphql/customers.js`.
 
 ---
 

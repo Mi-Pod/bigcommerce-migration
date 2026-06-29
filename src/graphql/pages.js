@@ -25,9 +25,7 @@ exports.getPage = async (first, after = null) => {
             publishedAt
             createdAt
             updatedAt
-            author
             body
-            bodySummary
             templateSuffix
           }
         }

@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { getCount, getPage, getOne } = require("../graphql/shopify/articles");
+const { getCount, getPage, getOne } = require("../graphql/articles");
 const logger = require("../utils/logger");
 
 const EXPORTS_DIR = path.join(__dirname, "../../exports/content/blog_posts");

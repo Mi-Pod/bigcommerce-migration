@@ -29,7 +29,7 @@ Menus are managed via the **GraphQL Admin API only** — there is no REST endpoi
 
 > **Note:** The `menu` field requires an `id` argument (GID) — `handle` is not accepted. Build the GID from the numeric menu ID: `gid://shopify/Menu/{id}`.
 
-> **Depth:** Shopify menus support 3 levels of item nesting (`items > items > items`). The query in `src/graphql/shopify/navigation.js` fetches all 3. Fetching fewer levels silently drops the deepest tier — 3rd-level items (e.g. sub-categories under Disposables) were missed in the initial extraction because the original query only went 2 levels deep. Any `nav-*.json` files extracted before this fix must be re-extracted.
+> **Depth:** Shopify menus support 3 levels of item nesting (`items > items > items`). The query in `src/graphql/navigation.js` fetches all 3. Fetching fewer levels silently drops the deepest tier — 3rd-level items (e.g. sub-categories under Disposables) were missed in the initial extraction because the original query only went 2 levels deep. Any `nav-*.json` files extracted before this fix must be re-extracted.
 
 ```js
 const { shopifyQl } = require("./api/shopify");
@@ -184,6 +184,6 @@ The two navigation menus active on this store:
 | `sidebar-menu` | `113748344895` | Mobile Main Nav |
 | `dsk-nav-21` | `179918012479` | Desktop Main Nav |
 
-Query by GID using `getMenu("gid://shopify/Menu/{id}")` in `src/graphql/shopify/navigation.js`. The `extractNav(handle)` script helper resolves handle → GID automatically via the `KNOWN_MENUS` table in `src/scripts/navigation.js`.
+Query by GID using `getMenu("gid://shopify/Menu/{id}")` in `src/graphql/navigation.js`. The `extractNav(handle)` script helper resolves handle → GID automatically via the `KNOWN_MENUS` table in `src/scripts/navigation.js`.
 
 Use `GET /api/test/nav-validate` to fetch both menus, log a type breakdown, and save raw JSON to `migration/nav-validation.json`. Individual menus can be fetched via `GET /api/test/nav/:handle`.

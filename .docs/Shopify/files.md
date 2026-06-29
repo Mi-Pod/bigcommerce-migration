@@ -11,7 +11,7 @@ The `files` root query exposes the store's File Manager — images, videos, and 
 - `fileStatus` values: `UPLOADED`, `PROCESSING`, `READY`, `FAILED`
 - Only `READY` files have resolvable URLs; `PROCESSING`/`FAILED` files may have no URL yet
 - `MediaImage` exposes the `image` sub-object with `url`, `width`, `height`
-- `Video` exposes `sources[]` (multiple renditions at different qualities)
+- `Video` exposes `sources[]` (multiple renditions at different qualities); `mimeType` and `filename` do **not** exist directly on `Video` — use `sources[].mimeType` instead
 - `GenericFile` exposes a direct `url` and `mimeType`
 
 ---
@@ -46,8 +46,6 @@ query GetFilesPage($first: Int!, $after: String) {
           image { url width height }
         }
         ... on Video {
-          filename
-          mimeType
           sources { url mimeType format height width }
         }
         ... on GenericFile {

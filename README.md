@@ -1,14 +1,14 @@
 # BigCommerce Migration
 
-Express.js service that migrates product catalogue data from Shopify to BigCommerce. Fetches products via the Shopify Admin GraphQL API and writes them to BigCommerce via the v3 REST API — handling Customer Price Group deduplication, brand/category resolution, metafield transfer, and per-SKU wholesale pricing via Price Lists.
+Express.js service that migrates data from Shopify to BigCommerce. Handles both **product** migration (Customer Price Group deduplication, brand/category resolution, metafield transfer, per-SKU wholesale pricing via Price Lists) and **customer** migration (field mapping, address deduplication, metafield transfer, marketing consent).
 
 ## ToC
 
 | Name | Description | Link |
 | ---- | ----------- | ---- |
-| Routes — BigCommerce | Proxy routes for BC catalogue resources (customer groups, categories, brands, inventory) | [#bigcommerce-apibigcommerce](#bigcommerce-apibigcommerce) |
-| Routes — Migration | Trigger full Shopify → BigCommerce product migration | [#migration-apimigrate](#migration-apimigrate) |
-| Routes — Test | Dev utilities: connection test, field validation, translation, image upload | [#test-apitest](#test-apitest) |
+| Routes — BigCommerce | Proxy routes for BC resources (customers, customer groups, categories, brands, inventory) | [#bigcommerce-apibigcommerce](#bigcommerce-apibigcommerce) |
+| Routes — Migration | Trigger full Shopify → BigCommerce product and customer migration | [#migration-apimigrate](#migration-apimigrate) |
+| Routes — Test | Dev utilities: connection test, field validation, translation, customer composition | [#test-apitest](#test-apitest) |
 | Documentation | Index of internal `.docs/` reference files | [#documentation](#documentation) |
 
 ## Routes
@@ -21,6 +21,99 @@ All error responses share the shape `{ "error": "<message>" }`.
 ### BigCommerce `/api/bigcommerce`
 
 Proxy layer over the BigCommerce v3/v2 REST API. Credentials and store hash are resolved from `.env`. Query params are forwarded to BC as-is.
+
+---
+
+#### Customers
+
+##### GET: Get many
+
+**Status:** 🟢 Ready  
+**Description:** List customers. Accepts any query params forwarded to BC (e.g. `?email:in=jane@example.com&limit=10`).  
+**Source:** BigCommerce
+
+**Example request:**
+
+```bash
+curl http://localhost:3000/api/bigcommerce/customers
+```
+
+| Status | Message | Description |
+| ------ | ------- | ----------- |
+| 200 | — | Paginated list of customer objects |
+| 500 | `error` | BC API error |
+
+---
+
+##### GET: Get one
+
+**Status:** 🟢 Ready  
+**Description:** Fetch a single customer by BC ID.  
+**Source:** BigCommerce
+
+```bash
+curl http://localhost:3000/api/bigcommerce/customers/4
+```
+
+| Status | Message | Description |
+| ------ | ------- | ----------- |
+| 200 | — | Single customer object |
+| 500 | `error` | BC API error |
+
+---
+
+##### POST: Create one
+
+**Status:** 🟢 Ready  
+**Description:** Create a customer. Body is passed directly to BC.  
+**Source:** BigCommerce
+
+```bash
+curl -X POST http://localhost:3000/api/bigcommerce/customers \
+  -H "Content-Type: application/json" \
+  -d '{ "first_name": "Jane", "last_name": "Doe", "email": "jane@example.com", "channel_ids": [1] }'
+```
+
+| Status | Message | Description |
+| ------ | ------- | ----------- |
+| 201 | — | Newly created customer |
+| 500 | `error` | BC API error |
+
+---
+
+##### PUT: Update one
+
+**Status:** 🟢 Ready  
+**Description:** Update a customer by ID. Send only fields to change.  
+**Source:** BigCommerce
+
+```bash
+curl -X PUT http://localhost:3000/api/bigcommerce/customers/4 \
+  -H "Content-Type: application/json" \
+  -d '{ "phone": "+15559876543" }'
+```
+
+| Status | Message | Description |
+| ------ | ------- | ----------- |
+| 200 | — | Updated customer |
+| 500 | `error` | BC API error |
+
+---
+
+##### DELETE: Delete one
+
+**Status:** 🟢 Ready  
+**Description:** Delete a customer by BC ID.  
+**Source:** BigCommerce
+
+```bash
+curl -X DELETE http://localhost:3000/api/bigcommerce/customers/4
+```
+
+| Status | Message | Description |
+| ------ | ------- | ----------- |
+| 204 | — | Deleted — no body |
+| 500 | `error` | BC API error |
 
 ---
 
@@ -549,7 +642,59 @@ curl -X POST http://localhost:3000/api/bigcommerce/inventory/relative \
 
 ### Migration `/api/migrate`
 
-Orchestrates the full Shopify → BigCommerce product migration pipeline. Shopify is accessed via internal GraphQL — no Shopify-facing routes are exposed. See [.docs/Shopify/products.md](.docs/Shopify/products.md) for the source schema.
+Orchestrates full Shopify → BigCommerce migration for products and customers. Shopify is accessed via internal GraphQL — no Shopify-facing routes are exposed.
+
+---
+
+#### Customers
+
+##### POST: Migrate one
+
+**Status:** 🟢 Ready  
+**Description:** Migrates a single Shopify customer end-to-end: fetches from Shopify GraphQL, resolves name splitting, deduplicates addresses, maps marketing consent, creates the BC customer, creates addresses, and writes all non-null metafields. Idempotent — re-running with the same customer skips if the email already exists in BC. Saves composed and migrated JSON to `migration/customers/`.  
+**Source:** Shopify → BigCommerce
+
+See [.docs/BigCommerce/customer-data-shape.md](.docs/BigCommerce/customer-data-shape.md) for the full field mapping.
+
+**Example request:**
+
+```bash
+curl -X POST http://localhost:3000/api/migrate/customers/single \
+  -H "Content-Type: application/json" \
+  -d '{ "shopifyCustomerId": "2147081748549" }'
+```
+
+**Example response (`_action: "created"`):**
+
+```json
+{
+  "_source_customer_id": "gid://shopify/Customer/2147081748549",
+  "_shopify_numeric_id": 2147081748549,
+  "_migrated_at": "2026-06-26T00:00:00.000Z",
+  "_action": "created",
+  "bc_customer_id": 4,
+  "customer": { "id": 4, "email": "...", "first_name": "...", "last_name": "..." },
+  "addresses": [ { "id": 1, "address1": "...", "city": "..." } ],
+  "metafields": [ { "namespace": "avatax_excise", "key": "customer_no", "value": "C0076325" } ]
+}
+```
+
+**Example response (`_action: "skipped"`):**
+
+```json
+{
+  "_action": "skipped",
+  "_reason": "customer_exists",
+  "bc_customer_id": 4,
+  "email": "user@example.com"
+}
+```
+
+| Status | Message | Description |
+| ------ | ------- | ----------- |
+| 201 | — | Migration result — includes `_action: "created"` or `"skipped"` |
+| 400 | `shopifyCustomerId is required` | Missing body field |
+| 500 | `error` | Shopify GraphQL or BC API error |
 
 ---
 
@@ -597,7 +742,7 @@ curl -X POST http://localhost:3000/api/migrate/product \
 
 ### Test `/api/test`
 
-Development utilities for exploring data shape and validating connectivity. All Shopify-facing routes target a hardcoded product (`gid://shopify/Product/8191177064511`) unless noted.
+Development utilities for exploring data shape and validating connectivity. Product routes target a hardcoded Shopify product; customer routes accept an `id` query param.
 
 ---
 
@@ -855,6 +1000,69 @@ curl http://localhost:3000/api/test/inventory/set/relative/rand
 
 ---
 
+#### GET: Extract sample customers
+
+**Status:** 🟢 Ready  
+**Description:** Fetches 3 hardcoded Shopify customer IDs and saves raw GraphQL JSON to `migration/customers/{id}.json`. Used to seed reference data for composing and validating migration payloads.  
+**Source:** Shopify
+
+```bash
+curl http://localhost:3000/api/test/extract-customers
+```
+
+| Status | Message | Description |
+| ------ | ------- | ----------- |
+| 200 | — | Array of `{ id, found, email, filepath }` per customer |
+| 500 | `error` | Shopify GraphQL error |
+
+---
+
+#### GET: Compose customer
+
+**Status:** 🟢 Ready  
+**Description:** Fetches a Shopify customer by ID, maps it to the full BC payload shape (customer body + addresses + metafields), and saves to `migration/customers/composed_{id}.json`. Does **not** write to BigCommerce — dry-run compose only.  
+**Source:** Shopify
+
+```bash
+curl "http://localhost:3000/api/test/compose-customer?id=2852474519615"
+```
+
+| Status | Message | Description |
+| ------ | ------- | ----------- |
+| 200 | — | Composed BC payload saved and returned |
+| 400 | `id query param is required` | Missing query param |
+| 500 | `error` | Shopify GraphQL error |
+
+---
+
+#### GET: BC customer (full)
+
+**Status:** 🟢 Ready  
+**Description:** Fetches a BigCommerce customer by BC ID alongside their addresses and metafields in parallel. Useful for inspecting a migrated customer's state in BC.  
+**Source:** BigCommerce
+
+```bash
+curl "http://localhost:3000/api/test/bc-customer?id=4"
+```
+
+**Example response:**
+
+```json
+{
+  "customer": { "id": 4, "email": "...", "first_name": "...", "last_name": "..." },
+  "addresses": [ { "id": 1, "address1": "...", "city": "..." } ],
+  "metafields": [ { "namespace": "avatax_excise", "key": "customer_no", "value": "C0076325" } ]
+}
+```
+
+| Status | Message | Description |
+| ------ | ------- | ----------- |
+| 200 | — | Customer + addresses + metafields |
+| 400 | `id query param is required` | Missing query param |
+| 500 | `error` | BC API error |
+
+---
+
 ## Documentation
 
 Internal reference docs live in `.docs/`. The BigCommerce directory covers the BC REST API; the Shopify directory covers the source data schema.
@@ -867,14 +1075,23 @@ Internal reference docs live in `.docs/`. The BigCommerce directory covers the B
 | Authentication | Store-level auth, where to find credentials, required OAuth scopes | [.docs/BigCommerce/authentication.md](.docs/BigCommerce/authentication.md) |
 | Default Permissions | Full list of required API scopes for this project | [.docs/BigCommerce/default-permissions.md](.docs/BigCommerce/default-permissions.md) |
 | Product Data Shape | Shopify → BC field mapping, CPG pattern, metafield mapping, customer group pricing | [.docs/BigCommerce/product-data-shape.md](.docs/BigCommerce/product-data-shape.md) |
+| Customer Data Shape | Shopify → BC customer field mapping, address dedup, metafields, migrate function, output shape | [.docs/BigCommerce/customer-data-shape.md](.docs/BigCommerce/customer-data-shape.md) |
 | Inventory | Multi-location inventory, absolute vs relative adjustments, location ID lookup | [.docs/BigCommerce/inventory.md](.docs/BigCommerce/inventory.md) |
 | Image Migration | URL passthrough vs download+re-upload strategies, tradeoffs | [.docs/BigCommerce/image-migration.md](.docs/BigCommerce/image-migration.md) |
 | Endpoint — Products | CRUD operations for `/v3/catalog/products` | [.docs/BigCommerce/endpoints/products.md](.docs/BigCommerce/endpoints/products.md) |
-| Endpoint — Customers | CRUD operations for `/v3/customers` | [.docs/BigCommerce/endpoints/customers.md](.docs/BigCommerce/endpoints/customers.md) |
+| Endpoint — Customers | CRUD + addresses + metafields for `/v3/customers` | [.docs/BigCommerce/endpoints/customers.md](.docs/BigCommerce/endpoints/customers.md) |
+| Endpoint — Brands | CRUD for `/v3/catalog/brands` | [.docs/BigCommerce/endpoints/brands.md](.docs/BigCommerce/endpoints/brands.md) |
+| Endpoint — Categories | CRUD for `/v3/catalog/categories` | [.docs/BigCommerce/endpoints/categories.md](.docs/BigCommerce/endpoints/categories.md) |
+| Endpoint — Customer Groups | CRUD for `/v2/customer_groups` | [.docs/BigCommerce/endpoints/customer-groups.md](.docs/BigCommerce/endpoints/customer-groups.md) |
+| Endpoint — Inventory | Locations + absolute/relative adjustments for `/v3/inventory` | [.docs/BigCommerce/endpoints/inventory.md](.docs/BigCommerce/endpoints/inventory.md) |
+| Endpoint — Images | Product image upload via URL passthrough for `/v3/catalog/products/{id}/images` | [.docs/BigCommerce/endpoints/images.md](.docs/BigCommerce/endpoints/images.md) |
 
 ### Shopify
 
 | Name | Description | Link |
 | ---- | ----------- | ---- |
 | Products | Source schema — GraphQL fields, variant structure, CPG pattern, metafield types, caveats | [.docs/Shopify/products.md](.docs/Shopify/products.md) |
-| Customers | Source schema for Shopify customers | [.docs/Shopify/customers.md](.docs/Shopify/customers.md) |
+| Customers | Source schema — GraphQL fields, addresses, marketing consent, metafields, caveats | [.docs/Shopify/customers.md](.docs/Shopify/customers.md) |
+| Metafields | Metafield fetching strategies (aliased singular vs identifiers list), namespace patterns | [.docs/Shopify/metafields.md](.docs/Shopify/metafields.md) |
+| Navigation | Menu GraphQL schema, item types, fetch pattern, migration mapping to BC categories | [.docs/Shopify/navigation.md](.docs/Shopify/navigation.md) |
+| API Version | Current version (2026-04), compatibility matrix, what changed | [.docs/Shopify/api-version.md](.docs/Shopify/api-version.md) |

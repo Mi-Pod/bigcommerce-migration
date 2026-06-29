@@ -630,6 +630,35 @@
       "name": "Migrate",
       "item": [
         {
+          "name": "Customers — Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/customers/count",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "customers", "count"]
+            }
+          }
+        },
+        {
+          "name": "Customers — Bulk Import",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"batch_size\": 50,\n  \"skip\": 0,\n  \"max_batches\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/customers/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "customers", "bulk"]
+            }
+          }
+        },
+        {
           "name": "Migrate Customer (single)",
           "request": {
             "method": "POST",

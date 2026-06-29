@@ -1,4 +1,4 @@
-const shopify = require("../graphql/shopify/products");
+const shopify = require("../graphql/products");
 const { collectMetafields, getProductCollections } = shopify;
 const productService = require("../services/bigcommerce/product.service");
 const brandService = require("../services/bigcommerce/brand.service");

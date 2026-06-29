@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { getAllCollections } = require("../graphql/shopify/collections");
+const { getAllCollections } = require("../graphql/collections");
 const logger = require("../utils/logger");
 
 const DATA_DIR = path.join(__dirname, "../../migration/data");

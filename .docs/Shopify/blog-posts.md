@@ -10,11 +10,11 @@ Shopify's content model separates **Blogs** (containers) from **Articles** (indi
 - **Article** — an individual post belonging to one blog
 - `isPublished` — boolean; `true` means visible to storefront customers
 - `body` — HTML string (may contain Liquid tags if the theme renders them; export as-is)
-- `bodySummary` — plain-text excerpt (auto-generated or manually set)
-- `author` — sub-object with `name` and `email`
+- `author` — sub-object with `name` only (`email` field does not exist on `ArticleAuthor` in Admin GraphQL)
 - `image` — optional hero image; `url` and `altText`
 - `tags` — array of strings
 - `publishedAt` — ISO 8601 string; null if not yet published
+- `bodySummary` — **does not exist** on `Article` type in Admin GraphQL; omit from queries
 
 ---
 
@@ -45,8 +45,7 @@ query GetArticlesPage($first: Int!, $after: String) {
         updatedAt
         tags
         body
-        bodySummary
-        author { name email }
+        author { name }
         image { url altText }
         blog { id handle title }
       }
@@ -73,8 +72,7 @@ query GetArticle($id: ID!) {
     updatedAt
     tags
     body
-    bodySummary
-    author { name email }
+    author { name }
     image { url altText }
     blog { id handle title }
   }

@@ -28,10 +28,10 @@ product(id: $id) {
 
 Each alias returns a single `{ namespace, key, value, type }` object, or `null` if not set on the product.
 
-The aliases and collection logic live in `src/graphql/shopify/products.js` (`METAFIELD_DEFS` + `collectMetafields`). Call `collectMetafields(product)` after fetching to get a flat array of set metafields.
+The aliases and collection logic live in `src/graphql/products.js` (`METAFIELD_DEFS` + `collectMetafields`). Call `collectMetafields(product)` after fetching to get a flat array of set metafields.
 
 ```js
-const { collectMetafields } = require("../graphql/shopify/products");
+const { collectMetafields } = require("../graphql/products");
 const metafields = collectMetafields(p); // [{ namespace, key, value, type }, ...]
 ```
 
@@ -39,7 +39,7 @@ const metafields = collectMetafields(p); // [{ namespace, key, value, type }, ..
 
 ## Targeted Metafields (Migrated to BigCommerce)
 
-These 8 metafields are explicitly requested in `src/graphql/shopify/products.js` and written to BC after product creation.
+These 8 metafields are explicitly requested in `src/graphql/products.js` and written to BC after product creation.
 
 | Namespace | Key | Shopify Type | Always Populated | Example Value |
 |---|---|---|---|---|
@@ -101,7 +101,7 @@ All metafields are written with `permission_set: "read"` — visible to storefro
 
 ## Adding a New Metafield
 
-1. Add an entry to `METAFIELD_DEFS` in `src/graphql/shopify/products.js` (or `CUSTOMER_METAFIELD_DEFS` in `customers.js`) — `{ alias, namespace, key }`
+1. Add an entry to `METAFIELD_DEFS` in `src/graphql/products.js` (or `CUSTOMER_METAFIELD_DEFS` in `customers.js`) — `{ alias, namespace, key }`
 2. Add a row to the **Targeted Metafields** table above
 3. No changes needed in `migrate.js` — the write loop handles all entries generically
 

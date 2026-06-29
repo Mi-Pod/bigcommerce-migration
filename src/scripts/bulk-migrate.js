@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { getCount, getPage, advanceCursor } = require("../graphql/shopify/products");
+const { getCount, getPage, advanceCursor } = require("../graphql/products");
 const { migrateProduct } = require("./migrate");
 const logger = require("../utils/logger");
 

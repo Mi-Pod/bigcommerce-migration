@@ -14,6 +14,53 @@ const CUSTOMER_METAFIELD_DEFS = [
 exports.collectMetafields = (customer) =>
   CUSTOMER_METAFIELD_DEFS.map(({ alias }) => customer[alias]).filter(Boolean);
 
+// Total customer count — lightweight, no customer data fetched.
+exports.getCount = async () => {
+  const res = await shopifyQl(/* GraphQL */ `query { customersCount { count } }`, null);
+  if (!res.data && res.errors?.length) {
+    throw new Error(res.errors.map((e) => e.message).join("; "));
+  }
+  return res.data.customersCount.count;
+};
+
+// Fetch one page of customer stubs (id + email + name + state) for cursor-based iteration.
+// Returns { nodes, hasNextPage, endCursor }.
+exports.getPage = async (first, after = null) => {
+  const query = /* GraphQL */ `
+    query CustomerPage($first: Int!, $after: String) {
+      customers(first: $first, after: $after) {
+        pageInfo { hasNextPage endCursor }
+        edges { node { id email firstName lastName state createdAt amountSpent { amount } } }
+      }
+    }
+  `;
+  const res = await shopifyQl(query, { first, ...(after ? { after } : {}) });
+  if (!res.data && res.errors?.length) {
+    throw new Error(res.errors.map((e) => e.message).join("; "));
+  }
+  const { edges, pageInfo } = res.data.customers;
+  return {
+    nodes: edges.map((e) => e.node),
+    hasNextPage: pageInfo.hasNextPage,
+    endCursor: pageInfo.endCursor,
+  };
+};
+
+// Advance the cursor by `count` positions without fetching full customer data.
+// Used to implement a `skip` offset before bulk import starts.
+exports.advanceCursor = async (count) => {
+  let cursor = null;
+  let remaining = count;
+  while (remaining > 0) {
+    const take = Math.min(remaining, 250);
+    const page = await exports.getPage(take, cursor);
+    cursor = page.endCursor;
+    remaining -= take;
+    if (!page.hasNextPage) break;
+  }
+  return cursor;
+};
+
 // Fetch a single customer by numeric ID or full GID.
 exports.getOne = async (customerId) => {
   const id = String(customerId).startsWith("gid://")

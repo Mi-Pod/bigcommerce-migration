@@ -204,7 +204,7 @@ Fetched via `metafields(identifiers: [...])`. Returns a **flat array** (not a co
 - **`descriptionHtml` contains Shopify-relative links** (e.g. `/collections/...`). These will point to the old Shopify store after migration and should be updated or stripped.
 - **Variant cap:** `listAll` hardcodes `variants(first: 100)`. `getOne` pre-fetches the exact count to avoid truncation (Shopify max is 250 per request). Products with more than 250 total variants would need cursor-based pagination (not currently implemented).
 - **Image cap:** `images(first: 20)` — products with more than 20 images will be silently truncated.
-- **Metafields use aliased singular queries.** Adding a new metafield requires adding an entry to `METAFIELD_DEFS` in `src/graphql/shopify/products.js` and documenting it in `.docs/Shopify/metafields.md`.
+- **Metafields use aliased singular queries.** Adding a new metafield requires adding an entry to `METAFIELD_DEFS` in `src/graphql/products.js` and documenting it in `.docs/Shopify/metafields.md`.
 
 ---
 

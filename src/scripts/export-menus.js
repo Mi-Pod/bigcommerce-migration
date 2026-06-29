@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { getMenusPage, getMenu } = require("../graphql/shopify/navigation");
+const { getMenusPage, getMenu } = require("../graphql/navigation");
 const logger = require("../utils/logger");
 
 const EXPORTS_DIR = path.join(__dirname, "../../exports/content/menus");

@@ -1,4 +1,4 @@
-const shopify = require("../../graphql/shopify/products");
+const shopify = require("../../graphql/products");
 
 exports.getList = async (filter) => {
   const data = await shopify.listAll(filter);

@@ -1,12 +1,12 @@
 const fs = require("fs");
 const path = require("path");
-const { getCount, getPage, getOne } = require("../graphql/shopify/pages");
+const { getCount, getPage, getOne } = require("../graphql/pages");
 const logger = require("../utils/logger");
 
 const EXPORTS_DIR = path.join(__dirname, "../../exports/content/pages");
 const DATA_DIR = path.join(EXPORTS_DIR, "data");
 const CSV_PATH = path.join(EXPORTS_DIR, "index.csv");
-const CSV_HEADERS = "id,title,handle,author,is_published,published_at,updated_at,template_suffix,exported_at\n";
+const CSV_HEADERS = "id,title,handle,is_published,published_at,updated_at,template_suffix,exported_at\n";
 
 function ensureDirs() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -25,7 +25,6 @@ function toCsvRow(node) {
     node.id,
     `"${(node.title || "").replace(/"/g, '""')}"`,
     node.handle,
-    `"${(node.author || "").replace(/"/g, '""')}"`,
     node.isPublished,
     node.publishedAt || "",
     node.updatedAt,

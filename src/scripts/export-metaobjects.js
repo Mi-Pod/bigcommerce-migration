@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { getDefinitions, getCount, getPage, getOne } = require("../graphql/shopify/metaobjects");
+const { getDefinitions, getCount, getPage, getOne } = require("../graphql/metaobjects");
 const logger = require("../utils/logger");
 
 const EXPORTS_DIR = path.join(__dirname, "../../exports/content/metaobjects");

@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { getMenu } = require("../graphql/shopify/navigation");
+const { getMenu } = require("../graphql/navigation");
 const logger = require("../utils/logger");
 
 const MIGRATION_DIR = path.join(__dirname, "../../migration");
