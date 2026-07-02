@@ -1,7 +1,6 @@
 const { shopifyQl } = require("../api/shopify");
 
-// List all metaobject definitions (types) in the store.
-exports.getDefinitions = async () => {
+exports.getDefinitions = async (site) => {
   const query = /* GraphQL */ `
     query GetMetaobjectDefinitions($first: Int!, $after: String) {
       metaobjectDefinitions(first: $first, after: $after) {
@@ -27,7 +26,7 @@ exports.getDefinitions = async () => {
   let cursor = null;
 
   do {
-    const res = await shopifyQl(query, { first: 50, ...(cursor ? { after: cursor } : {}) });
+    const res = await shopifyQl(site, query, { first: 50, ...(cursor ? { after: cursor } : {}) });
     if (!res.data && res.errors?.length) {
       throw new Error(res.errors.map((e) => e.message).join("; "));
     }
@@ -39,18 +38,15 @@ exports.getDefinitions = async () => {
   return all;
 };
 
-// Count instances of a given metaobject type.
-exports.getCount = async (type) => {
-  const res = await shopifyQl(/* GraphQL */ `query CountMetaobjects($type: String!) { metaobjectsCount(type: $type) { count } }`, { type });
+exports.getCount = async (site, type) => {
+  const res = await shopifyQl(site, /* GraphQL */ `query CountMetaobjects($type: String!) { metaobjectsCount(type: $type) { count } }`, { type });
   if (!res.data && res.errors?.length) {
     throw new Error(res.errors.map((e) => e.message).join("; "));
   }
   return res.data.metaobjectsCount.count;
 };
 
-// Fetch one page of metaobject instances for a given type.
-// Returns { nodes, hasNextPage, endCursor }.
-exports.getPage = async (type, first, after = null) => {
+exports.getPage = async (site, type, first, after = null) => {
   const query = /* GraphQL */ `
     query GetMetaobjectPage($type: String!, $first: Int!, $after: String) {
       metaobjects(type: $type, first: $first, after: $after) {
@@ -68,7 +64,7 @@ exports.getPage = async (type, first, after = null) => {
       }
     }
   `;
-  const res = await shopifyQl(query, { type, first, ...(after ? { after } : {}) });
+  const res = await shopifyQl(site, query, { type, first, ...(after ? { after } : {}) });
   if (!res.data && res.errors?.length) {
     throw new Error(res.errors.map((e) => e.message).join("; "));
   }
@@ -80,8 +76,7 @@ exports.getPage = async (type, first, after = null) => {
   };
 };
 
-// Fetch a single metaobject by GID.
-exports.getOne = async (id) => {
+exports.getOne = async (site, id) => {
   const query = /* GraphQL */ `
     query GetMetaobject($id: ID!) {
       metaobject(id: $id) {
@@ -94,7 +89,7 @@ exports.getOne = async (id) => {
       }
     }
   `;
-  const res = await shopifyQl(query, { id });
+  const res = await shopifyQl(site, query, { id });
   if (!res.data && res.errors?.length) {
     throw new Error(res.errors.map((e) => e.message).join("; "));
   }

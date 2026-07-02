@@ -5,8 +5,9 @@ const { exportOne, countPages, exportAll } = require("../../scripts/export-pages
 
 // GET /api/content/pages/count — total page count
 router.get("/count", async (req, res) => {
+  const { site } = req.query;
   try {
-    const result = await countPages();
+    const result = await countPages(site);
     res.json(result);
   } catch (error) {
     logger.failure("export-pages", "Count failed", error);
@@ -14,12 +15,12 @@ router.get("/count", async (req, res) => {
   }
 });
 
-// GET /api/content/pages/one?id={gid} — export one page by GID
+// GET /api/content/pages/one?site={site}&id={gid} — export one page by GID
 router.get("/one", async (req, res) => {
-  const { id } = req.query;
+  const { site, id } = req.query;
   if (!id) return res.status(400).json({ error: "id query param (GID) is required" });
   try {
-    const result = await exportOne({ id });
+    const result = await exportOne(site, { id });
     res.json(result);
   } catch (error) {
     logger.failure("export-pages", "exportOne failed", error);
@@ -28,11 +29,11 @@ router.get("/one", async (req, res) => {
 });
 
 // POST /api/content/pages/bulk — export all pages
-// Body: { batch_size?: number, skip?: number, max_batches?: number }
+// Body: { site: "B2B", batch_size?: number, skip?: number, max_batches?: number }
 router.post("/bulk", async (req, res) => {
-  const { batch_size = 50, skip = 0, max_batches = 0 } = req.body ?? {};
+  const { site, batch_size = 50, skip = 0, max_batches = 0 } = req.body ?? {};
   try {
-    const result = await exportAll({ batch_size, skip, max_batches });
+    const result = await exportAll(site, { batch_size, skip, max_batches });
     res.json(result);
   } catch (error) {
     logger.failure("export-pages", "exportAll failed", error);

@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const categoryService = require("../services/bigcommerce/category.service");
+const { categories } = require("@mipod/bigcommerce");
 const logger = require("../utils/logger");
 
 const MIGRATION_DIR = path.join(__dirname, "../../migration");
@@ -18,12 +18,7 @@ const saveJson = (filename, data) => {
   return filepath;
 };
 
-// ── Migrate Navigation ────────────────────────────────────────────
-// Reads composed-nav.json, backs up existing BC categories, then
-// creates categories in two passes (top-level first, then nested)
-// resolving {{_ref}} parent placeholders to real BC IDs.
-// Output: migration/nav-backup.json + migration/migrated-navigation.json
-exports.migrateNavigation = async () => {
+exports.migrateNavigation = async (site) => {
   const reqId = "migrate-nav";
 
   const composedPath = path.join(MIGRATION_DIR, "composed-nav.json");
@@ -31,26 +26,24 @@ exports.migrateNavigation = async () => {
     throw new Error("composed-nav.json not found — run POST /api/migrate/navigation/compose first");
   }
 
-  const { categories } = JSON.parse(fs.readFileSync(composedPath, "utf8"));
-  logger.notice(reqId, `Loaded ${categories.length} categories from composed-nav.json`);
+  const { categories: navCategories } = JSON.parse(fs.readFileSync(composedPath, "utf8"));
+  logger.notice(reqId, `Loaded ${navCategories.length} categories from composed-nav.json`);
 
-  // Backup existing BC categories before touching anything
   logger.info(reqId, "Backing up existing BC categories...");
-  const existing = await categoryService.getList({ limit: 250 });
+  const existing = await categories.getList(site, { limit: 250 });
   const existingCategories = existing.data ?? [];
   saveJson("nav-backup.json", existingCategories);
   logger.info(reqId, `Backed up ${existingCategories.length} existing categories → migration/nav-backup.json`);
 
-  // Pass 1: top-level categories (parent_id === 0)
-  const topLevel = categories.filter((c) => c.parent_id === 0);
-  const nested = categories.filter((c) => c.parent_id !== 0);
+  const topLevel = navCategories.filter((c) => c.parent_id === 0);
+  const nested = navCategories.filter((c) => c.parent_id !== 0);
 
   const refToId = {};
   const created = [];
 
   logger.notice(reqId, `Pass 1 — creating ${topLevel.length} top-level categories...`);
   for (const cat of topLevel) {
-    const result = await categoryService.create({
+    const result = await categories.create(site, {
       name: cat.name,
       parent_id: 0,
       sort_order: cat.sort_order,
@@ -62,7 +55,6 @@ exports.migrateNavigation = async () => {
     logger.success(reqId, `  "${cat.name}" → BC id: ${bcId}`);
   }
 
-  // Pass 2: nested categories — resolve {{_ref}} to real BC IDs
   logger.notice(reqId, `Pass 2 — creating ${nested.length} nested categories...`);
   for (const cat of nested) {
     const parentRef = cat.parent_id.replace(/\{\{|\}\}/g, "");
@@ -73,7 +65,7 @@ exports.migrateNavigation = async () => {
       continue;
     }
 
-    const result = await categoryService.create({
+    const result = await categories.create(site, {
       name: cat.name,
       parent_id: parentBcId,
       sort_order: cat.sort_order,
@@ -92,11 +84,7 @@ exports.migrateNavigation = async () => {
   return output;
 };
 
-// ── Reset Navigation ─────────────────────────────────────────────
-// Deletes all categories created by migrateNavigation, in reverse
-// order (children before parents). Never deletes categories that
-// existed before the migration (guarded by nav-backup.json).
-exports.resetNavigation = async () => {
+exports.resetNavigation = async (site) => {
   const reqId = "reset-nav";
 
   const resultPath = path.join(MIGRATION_DIR, "migrated-navigation.json");
@@ -104,16 +92,16 @@ exports.resetNavigation = async () => {
     throw new Error("migrated-navigation.json not found — nothing to reset");
   }
 
-  const { categories } = JSON.parse(fs.readFileSync(resultPath, "utf8"));
+  const { categories: migratedCategories } = JSON.parse(fs.readFileSync(resultPath, "utf8"));
 
   const backupPath = path.join(MIGRATION_DIR, "nav-backup.json");
   const preExisting = fs.existsSync(backupPath)
     ? new Set(JSON.parse(fs.readFileSync(backupPath, "utf8")).map((c) => c.id))
     : new Set();
 
-  logger.notice(reqId, `Deleting ${categories.length} categories (children-first)...`);
+  logger.notice(reqId, `Deleting ${migratedCategories.length} categories (children-first)...`);
 
-  const toDelete = [...categories].reverse();
+  const toDelete = [...migratedCategories].reverse();
   const deleted = [];
   const skipped = [];
 
@@ -123,7 +111,7 @@ exports.resetNavigation = async () => {
       skipped.push(cat);
       continue;
     }
-    await categoryService.remove(cat.bc_id);
+    await categories.remove(site, cat.bc_id);
     deleted.push(cat);
     logger.success(reqId, `  Deleted "${cat.name}" (BC id: ${cat.bc_id})`);
   }

@@ -1,26 +1,26 @@
 const express = require("express");
 const router = express.Router();
 const logger = require("../utils/logger");
-const productService = require("../services/bigcommerce/product.service");
-const customerService = require("../services/bigcommerce/customer.service");
+const { products: productService, customers: customerService } = require("@mipod/bigcommerce");
 const { makeRequest } = require("../api/bigcommerce");
 const { fieldValidation, translateProduct, migrateImages } = require("../scripts/test");
 const { extractSampleCustomers, composeCustomer } = require("../scripts/customers");
 
 router.get("/bigcommerce", async (req, res) => {
   const reqId = "bc-test";
+  const { site = "B2B" } = req.query;
 
   try {
     logger.notice(reqId, "Starting BigCommerce test — fetching first 5 products and customers");
 
     logger.info(reqId, "Fetching first 5 products...");
-    const productsRes = await productService.getList({ limit: 5 });
+    const productsRes = await productService.getList(site, { limit: 5 });
     const products = productsRes.data;
     logger.success(reqId, `Retrieved ${products.length} products`);
     products.forEach((p) => logger.trace(reqId, `Product: [${p.id}] ${p.name}`));
 
     logger.info(reqId, "Fetching first 5 customers...");
-    const customersRes = await customerService.getList({ limit: 5 });
+    const customersRes = await customerService.getList(site, { limit: 5 });
     const customers = customersRes.data;
     logger.success(reqId, `Retrieved ${customers.length} customers`);
     customers.forEach((c) =>
@@ -56,11 +56,11 @@ router.get("/translate-product", async (req, res) => {
   }
 });
 
-// bcProductId passed as query param: /api/test/migrate-images?bcProductId=123
+// bcProductId passed as query param: /api/test/migrate-images?site=B2B&bcProductId=123
 router.get("/migrate-images", async (req, res) => {
   try {
-    const { bcProductId } = req.query;
-    const result = await migrateImages(bcProductId);
+    const { bcProductId, site = "B2B" } = req.query;
+    const result = await migrateImages(site, bcProductId);
     res.json(result);
   } catch (error) {
     logger.failure("migrate-images", "Image migration failed", error);
@@ -91,17 +91,17 @@ router.get("/compose-customer", async (req, res) => {
   }
 });
 
-// GET /api/test/bc-customer?id=123
+// GET /api/test/bc-customer?site=B2B&id=123
 router.get("/bc-customer", async (req, res) => {
-  const { id } = req.query;
+  const { id, site = "B2B" } = req.query;
   if (!id) {
     return res.status(400).json({ error: "id query param is required" });
   }
   try {
     const [customerRes, addressRes, metafieldRes] = await Promise.all([
-      customerService.getOne(id),
-      makeRequest("GET", "/v3/customers/addresses", { params: { "customer_id:in": id } }),
-      makeRequest("GET", `/v3/customers/${id}/metafields`),
+      customerService.getOne(site, id),
+      makeRequest(site, "GET", "/v3/customers/addresses", { params: { "customer_id:in": id } }),
+      makeRequest(site, "GET", `/v3/customers/${id}/metafields`),
     ]);
     res.json({
       customer: customerRes.data?.[0] ?? null,
@@ -114,14 +114,14 @@ router.get("/bc-customer", async (req, res) => {
   }
 });
 
-// GET /api/test/product-metafields?bcProductId=123
+// GET /api/test/product-metafields?site=B2B&bcProductId=123
 router.get("/product-metafields", async (req, res) => {
-  const { bcProductId } = req.query;
+  const { bcProductId, site = "B2B" } = req.query;
   if (!bcProductId) {
     return res.status(400).json({ error: "bcProductId query param is required" });
   }
   try {
-    const result = await makeRequest("GET", `/v3/catalog/products/${bcProductId}/metafields`);
+    const result = await makeRequest(site, "GET", `/v3/catalog/products/${bcProductId}/metafields`);
     res.json({ bc_product_id: Number(bcProductId), metafields: result.data ?? [] });
   } catch (error) {
     logger.failure("product-metafields", "Metafield fetch failed", error);

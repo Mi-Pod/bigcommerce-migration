@@ -23,13 +23,12 @@ const QUERY = /* GraphQL */ `
   }
 `;
 
-// Fetches every collection via cursor pagination. Returns a flat array of nodes.
-exports.getAllCollections = async () => {
+exports.getAllCollections = async (site) => {
   const all = [];
   let cursor = null;
 
   do {
-    const res = await shopifyQl(QUERY, cursor ? { cursor } : {});
+    const res = await shopifyQl(site, QUERY, cursor ? { cursor } : {});
 
     if (!res.data && res.errors?.length) {
       const messages = res.errors.map((e) => e.message).join("; ");

@@ -6,11 +6,11 @@ const logger = require("../utils/logger");
 const DATA_DIR = path.join(__dirname, "../../migration/data");
 const OUTPUT_FILE = path.join(DATA_DIR, "shopify-collections.json");
 
-exports.fetchShopifyCollections = async () => {
+exports.fetchShopifyCollections = async (site) => {
   const reqId = "shopify-collections";
 
   logger.info(reqId, "Fetching all Shopify collections...");
-  const collections = await getAllCollections();
+  const collections = await getAllCollections(site);
   logger.success(reqId, `Fetched ${collections.length} collections`);
 
   if (!fs.existsSync(DATA_DIR)) {

@@ -25,24 +25,23 @@ const saveJson = (filename, data) => {
   return filepath;
 };
 
-// ─────────────────────────────────────────────────────────────
-// 1. EXTRACT NAV
-//    Fetches a single Shopify menu by handle and saves it.
-//    Output: migration/nav-{handle}.json
-// ─────────────────────────────────────────────────────────────
-exports.extractNav = async (handle) => {
+exports.extractNav = async (site, handle, { menuId } = {}) => {
   const reqId = "nav-extract";
   logger.notice(reqId, `Fetching Shopify menu: "${handle}"`);
 
-  const known = KNOWN_MENUS.find((m) => m.handle === handle);
-  if (!known) {
-    throw new Error(
-      `Unknown menu handle "${handle}". Known handles: ${KNOWN_MENUS.map((m) => m.handle).join(", ")}`
-    );
+  let gid;
+  if (menuId) {
+    gid = String(menuId).startsWith("gid://") ? menuId : `gid://shopify/Menu/${menuId}`;
+  } else {
+    const known = KNOWN_MENUS.find((m) => m.handle === handle);
+    if (!known) {
+      throw new Error(
+        `Unknown menu handle "${handle}". Known handles: ${KNOWN_MENUS.map((m) => m.handle).join(", ")}. Pass ?menuId=<shopify_id> to use a custom handle.`
+      );
+    }
+    gid = `gid://shopify/Menu/${known.id}`;
   }
-
-  const gid = `gid://shopify/Menu/${known.id}`;
-  const data = await getMenu(gid);
+  const data = await getMenu(site, gid);
   const menu = data?.menu;
 
   if (!menu) throw new Error(`Menu not found: "${handle}"`);
@@ -61,13 +60,7 @@ exports.extractNav = async (handle) => {
   return menu;
 };
 
-// ─────────────────────────────────────────────────────────────
-// 2. VALIDATE NAVS
-//    Fetches all known menus and produces a validation summary:
-//    item counts, type breakdown, and any HTTP items needing review.
-//    Output: migration/nav-validation.json
-// ─────────────────────────────────────────────────────────────
-exports.validateNavs = async () => {
+exports.validateNavs = async (site) => {
   const reqId = "nav-validate";
   logger.notice(reqId, `Validating ${KNOWN_MENUS.length} known menus...`);
 
@@ -77,7 +70,7 @@ exports.validateNavs = async () => {
   for (const { handle, role } of KNOWN_MENUS) {
     logger.info(reqId, `Fetching "${handle}" (${role})...`);
 
-    const menu = await exports.extractNav(handle);
+    const menu = await exports.extractNav(site, handle);
 
     const allItems = [
       ...menu.items,

@@ -14,6 +14,259 @@
   ],
   "item": [
     {
+      "name": "Migration Workflow — B2C",
+      "item": [
+        {
+          "name": "Step 1 — Verify BC Connection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/bigcommerce?site=B2C",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "bigcommerce"],
+              "query": [{ "key": "site", "value": "B2C" }]
+            }
+          }
+        },
+        {
+          "name": "Step 2 — Fetch All Shopify Collections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/shopify/collections?site=B2C",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "shopify", "collections"],
+              "query": [{ "key": "site", "value": "B2C", "description": "Writes shopify-collections.json — required by Steps 5 and 6" }]
+            }
+          }
+        },
+        {
+          "name": "Step 3 — Extract Nav (Desktop: dsk-nav-21)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/navigation/dsk-nav-21?site=B2C",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "navigation", "dsk-nav-21"],
+              "query": [
+                { "key": "site", "value": "B2C", "description": "Writes nav-dsk-nav-21.json — required by Step 5" },
+                { "key": "menuId", "value": "179918012479", "description": "Shopify numeric menu ID — required if this handle isn't in KNOWN_MENUS for this site", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step 4 — Extract Nav (Mobile: sidebar-menu)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/navigation/sidebar-menu?site=B2C",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "navigation", "sidebar-menu"],
+              "query": [
+                { "key": "site", "value": "B2C", "description": "Writes nav-sidebar-menu.json — required by Step 5" },
+                { "key": "menuId", "value": "113748344895", "description": "Shopify numeric menu ID — required if this handle isn't in KNOWN_MENUS for this site", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step 5 — Build Nav Collection Map",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/shopify/nav-collection-map?site=B2C",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "shopify", "nav-collection-map"],
+              "query": [{ "key": "site", "value": "B2C", "description": "Needs Steps 2–4. Writes nav-collection-map.json — required by Step 6" }]
+            }
+          }
+        },
+        {
+          "name": "Step 6 — Build Collection Visibility Map",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/shopify/collection-visibility-map?site=B2C",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "shopify", "collection-visibility-map"],
+              "query": [{ "key": "site", "value": "B2C", "description": "Needs Steps 2 and 5. Writes collection-visibility-map.json — required by product migration" }]
+            }
+          }
+        },
+        {
+          "name": "Step 7 — Count Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/products/count?site=B2C",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "products", "count"],
+              "query": [{ "key": "site", "value": "B2C" }]
+            }
+          }
+        },
+        {
+          "name": "Step 8 — Migrate Single Product (test run)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"site\": \"B2C\",\n  \"shopifyProductId\": \"gid://shopify/Product/8191177064511\",\n  \"outputJson\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/products/single",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "products", "single"]
+            }
+          }
+        },
+        {
+          "name": "Step 9 — Verify Product Metafields",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/product-metafields?site=B2C&bcProductId=123",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "product-metafields"],
+              "query": [
+                { "key": "site", "value": "B2C" },
+                { "key": "bcProductId", "value": "123", "description": "bc_product_id from Step 8 response" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Step 10 — Bulk Migrate Products",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"site\": \"B2C\",\n  \"batch_size\": 10,\n  \"skip\": 0,\n  \"max_batches\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/products/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "products", "bulk"]
+            }
+          }
+        },
+        {
+          "name": "Step 11 — Count Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/customers/count?site=B2C",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "customers", "count"],
+              "query": [{ "key": "site", "value": "B2C" }]
+            }
+          }
+        },
+        {
+          "name": "Step 12 — Migrate Single Customer (test run)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"site\": \"B2C\",\n  \"shopifyCustomerId\": \"2147081748549\",\n  \"save\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/customers/single",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "customers", "single"]
+            }
+          }
+        },
+        {
+          "name": "Step 13 — Bulk Migrate Customers",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"site\": \"B2C\",\n  \"batch_size\": 50,\n  \"skip\": 0,\n  \"max_batches\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/customers/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "customers", "bulk"]
+            }
+          }
+        },
+        {
+          "name": "Step 14 — Compose BC Navigation Payload",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/navigation/compose",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "navigation", "compose"]
+            }
+          }
+        },
+        {
+          "name": "Step 15 — Compare Navigation (BC vs Composed)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/navigation/compare",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "navigation", "compare"]
+            }
+          }
+        },
+        {
+          "name": "Step 16 — Migrate Navigation to BC",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"site\": \"B2C\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/navigation/migrate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "navigation", "migrate"]
+            }
+          }
+        },
+        {
+          "name": "Step 17 — Validate Navigation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/migrate/navigation/validate?site=B2C",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "migrate", "navigation", "validate"],
+              "query": [{ "key": "site", "value": "B2C" }]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Test",
       "item": [
         {

@@ -1,17 +1,14 @@
 const { shopifyQl } = require("../api/shopify");
 
-// Total file count across all types.
-exports.getCount = async () => {
-  const res = await shopifyQl(/* GraphQL */ `query { filesCount { count } }`, null);
+exports.getCount = async (site) => {
+  const res = await shopifyQl(site, /* GraphQL */ `query { filesCount { count } }`, null);
   if (!res.data && res.errors?.length) {
     throw new Error(res.errors.map((e) => e.message).join("; "));
   }
   return res.data.filesCount.count;
 };
 
-// Fetch one page of files (MediaImage | Video | GenericFile union).
-// Returns { nodes, hasNextPage, endCursor }.
-exports.getPage = async (first, after = null) => {
+exports.getPage = async (site, first, after = null) => {
   const query = /* GraphQL */ `
     query GetFilesPage($first: Int!, $after: String) {
       files(first: $first, after: $after) {
@@ -40,7 +37,7 @@ exports.getPage = async (first, after = null) => {
       }
     }
   `;
-  const res = await shopifyQl(query, { first, ...(after ? { after } : {}) });
+  const res = await shopifyQl(site, query, { first, ...(after ? { after } : {}) });
   if (!res.data && res.errors?.length) {
     throw new Error(res.errors.map((e) => e.message).join("; "));
   }
@@ -52,8 +49,7 @@ exports.getPage = async (first, after = null) => {
   };
 };
 
-// Fetch a single file by GID via the node interface (no dedicated file(id:) root query exists).
-exports.getOne = async (id) => {
+exports.getOne = async (site, id) => {
   const query = /* GraphQL */ `
     query GetFile($id: ID!) {
       node(id: $id) {
@@ -71,7 +67,7 @@ exports.getOne = async (id) => {
       }
     }
   `;
-  const res = await shopifyQl(query, { id });
+  const res = await shopifyQl(site, query, { id });
   if (!res.data && res.errors?.length) {
     throw new Error(res.errors.map((e) => e.message).join("; "));
   }

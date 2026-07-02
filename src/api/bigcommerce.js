@@ -1,23 +1,19 @@
 const axios = require("axios");
 require("dotenv").config();
 
-const storeHash = process.env.BIGCOMMERCE_STORE_HASH;
-const accessToken = process.env.BIGCOMMERCE_CLIENT_ACCESS_TOKEN;
-
-const BASE_URL = `https://api.bigcommerce.com/stores/${storeHash}`;
-
-const defaultHeaders = {
-  Accept: "application/json",
-  "Content-Type": "application/json",
-  "X-Auth-Token": accessToken,
-};
-
-exports.makeRequest = async (method, path, { params, data } = {}) => {
+exports.makeRequest = async (site, method, path, { params, data } = {}) => {
+  const storeHash = process.env[`${site}_BIGCOMMERCE_STORE_HASH`];
+  const token = process.env[`${site}_BIGCOMMERCE_CLIENT_ACCESS_TOKEN`];
+  const baseUrl = `https://api.bigcommerce.com/stores/${storeHash}`;
   try {
     const res = await axios({
       method,
-      url: `${BASE_URL}${path}`,
-      headers: defaultHeaders,
+      url: `${baseUrl}${path}`,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-Auth-Token": token,
+      },
       params,
       data,
     });

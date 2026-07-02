@@ -1,20 +1,18 @@
-const inventoryService = require("../services/bigcommerce/inventory.service");
+const { inventory } = require("@mipod/bigcommerce");
 const logger = require("../utils/logger");
 
-// ── Get Inventory ────────────────────────────────────────────
-// Fetches all locations and the top 5 inventory items.
-exports.getInventory = async () => {
+exports.getInventory = async (site) => {
   const reqId = "inventory-get";
   logger.notice(reqId, "Fetching inventory locations and top 5 items...");
 
   logger.info(reqId, "Fetching locations...");
-  const locationsRes = await inventoryService.getLocations();
+  const locationsRes = await inventory.getLocations(site);
   const locations = locationsRes.data ?? [];
   logger.success(reqId, `${locations.length} location(s) found`);
   locations.forEach((l) => logger.trace(reqId, `Location: [${l.id}] ${l.label} (${l.code})`));
 
   logger.info(reqId, "Fetching top 5 inventory items...");
-  const itemsRes = await inventoryService.getItems({ limit: 5 });
+  const itemsRes = await inventory.getItems(site, { limit: 5 });
   const items = itemsRes.data ?? [];
   logger.success(reqId, `${items.length} item(s) retrieved`);
   items.forEach((item) => {
@@ -28,14 +26,12 @@ exports.getInventory = async () => {
   return { locations, items };
 };
 
-// ── Wipe Inventory ───────────────────────────────────────────
-// Fetches all inventory items and sets every SKU/location pair to 0.
-exports.wipeInventory = async () => {
+exports.wipeInventory = async (site) => {
   const reqId = "inventory-wipe";
   logger.notice(reqId, "Starting inventory wipe — setting all quantities to 0...");
 
   logger.info(reqId, "Fetching all inventory items...");
-  const itemsRes = await inventoryService.getItems({ limit: 250 });
+  const itemsRes = await inventory.getItems(site, { limit: 250 });
   const items = itemsRes.data ?? [];
   const total = itemsRes.meta?.pagination?.total ?? items.length;
 
@@ -61,18 +57,13 @@ exports.wipeInventory = async () => {
   );
 
   logger.info(reqId, `Zeroing ${adjustments.length} SKU/location pair(s)...`);
-  const result = await inventoryService.setAbsolute(adjustments);
+  const result = await inventory.setAbsolute(site, adjustments);
   logger.success(reqId, `Wipe complete — ${adjustments.length} pair(s) set to 0`);
 
   return { wiped: adjustments.length, items: result.data ?? [] };
 };
 
-// ── Set Inventory ────────────────────────────────────────────
-// Applies an absolute or relative inventory adjustment across all items.
-//   type: "absolute" — sets every SKU/location to `value` exactly
-//   type: "relative" — adjusts by `value` delta (positive or negative)
-//   value: number, or "rand" to pick a random integer in [1, 5]
-exports.setInventory = async ({ type, value }) => {
+exports.setInventory = async (site, { type, value }) => {
   const reqId = "inventory-set";
 
   const resolved = value === "rand"
@@ -92,7 +83,7 @@ exports.setInventory = async ({ type, value }) => {
   );
 
   logger.info(reqId, "Fetching all inventory items...");
-  const itemsRes = await inventoryService.getItems({ limit: 250 });
+  const itemsRes = await inventory.getItems(site, { limit: 250 });
   const items = itemsRes.data ?? [];
 
   if (items.length === 0) {
@@ -115,8 +106,8 @@ exports.setInventory = async ({ type, value }) => {
   logger.info(reqId, `Applying ${type} (${resolved}) to ${adjustments.length} SKU/location pair(s)...`);
 
   const result = type === "absolute"
-    ? await inventoryService.setAbsolute(adjustments)
-    : await inventoryService.adjustRelative(adjustments);
+    ? await inventory.setAbsolute(site, adjustments)
+    : await inventory.adjustRelative(site, adjustments);
 
   logger.success(reqId, `Done — ${adjustments.length} pair(s) updated`);
   return { updated: adjustments.length, type, value: resolved, items: result.data ?? [] };

@@ -1,7 +1,5 @@
 const { shopifyQl } = require("../api/shopify");
 
-// Each entry maps a stable alias (used as a field alias in GraphQL) to its namespace+key.
-// The singular `metafield(namespace, key)` field works for any app-owned or admin-set metafield.
 const METAFIELD_DEFS = [
   { alias: "mf_order_limits_order_maximum", namespace: "order_limits", key: "order_maximum" },
   { alias: "mf_filter_built_in_usa",        namespace: "filter",       key: "built_in_usa" },
@@ -13,23 +11,18 @@ const METAFIELD_DEFS = [
   { alias: "mf_custom_contains",            namespace: "custom",       key: "contains" },
 ];
 
-// Collect the aliased metafield fields from a product object into a flat array.
-// Drops any that weren't set on the product (null positions).
 exports.collectMetafields = (product) =>
   METAFIELD_DEFS.map(({ alias }) => product[alias]).filter(Boolean);
 
-// Total product count — lightweight, no product data fetched.
-exports.getCount = async () => {
-  const res = await shopifyQl(/* GraphQL */ `query { productsCount { count } }`, null);
+exports.getCount = async (site) => {
+  const res = await shopifyQl(site, /* GraphQL */ `query { productsCount { count } }`, null);
   if (!res.data && res.errors?.length) {
     throw new Error(res.errors.map((e) => e.message).join("; "));
   }
   return res.data.productsCount.count;
 };
 
-// Fetch one page of product stubs (id + title + handle + status) for cursor-based iteration.
-// Returns { nodes, hasNextPage, endCursor }.
-exports.getPage = async (first, after = null) => {
+exports.getPage = async (site, first, after = null) => {
   const query = /* GraphQL */ `
     query getProductPage($first: Int!, $after: String) {
       products(first: $first, after: $after) {
@@ -38,7 +31,7 @@ exports.getPage = async (first, after = null) => {
       }
     }
   `;
-  const res = await shopifyQl(query, { first, ...(after ? { after } : {}) });
+  const res = await shopifyQl(site, query, { first, ...(after ? { after } : {}) });
   if (!res.data && res.errors?.length) {
     throw new Error(res.errors.map((e) => e.message).join("; "));
   }
@@ -50,14 +43,12 @@ exports.getPage = async (first, after = null) => {
   };
 };
 
-// Advance the cursor by `count` positions without fetching full product data.
-// Used to implement a `skip` offset before bulk import starts.
-exports.advanceCursor = async (count) => {
+exports.advanceCursor = async (site, count) => {
   let cursor = null;
   let remaining = count;
   while (remaining > 0) {
     const take = Math.min(remaining, 250);
-    const page = await exports.getPage(take, cursor);
+    const page = await exports.getPage(site, take, cursor);
     cursor = page.endCursor;
     remaining -= take;
     if (!page.hasNextPage) break;
@@ -65,9 +56,7 @@ exports.advanceCursor = async (count) => {
   return cursor;
 };
 
-// Fetch every collection a product belongs to, paginated.
-// Kept separate from getOne so it can be called independently and handles >10 memberships.
-exports.getProductCollections = async (productId) => {
+exports.getProductCollections = async (site, productId) => {
   const all = [];
   let cursor = null;
 
@@ -82,7 +71,7 @@ exports.getProductCollections = async (productId) => {
         }
       }
     `;
-    const res = await shopifyQl(query, { id: productId, ...(cursor ? { cursor } : {}) });
+    const res = await shopifyQl(site, query, { id: productId, ...(cursor ? { cursor } : {}) });
 
     if (!res.data && res.errors?.length) {
       const messages = res.errors.map((e) => e.message).join("; ");
@@ -97,7 +86,7 @@ exports.getProductCollections = async (productId) => {
   return all;
 };
 
-exports.listAll = async (parameters) => {
+exports.listAll = async (site, parameters) => {
   const query = /* GraphQL */ `
     query ManyProducts {
       products(${parameters}) {
@@ -151,13 +140,11 @@ exports.listAll = async (parameters) => {
     }
   `;
 
-  const input = null;
-  const res = await shopifyQl(query, input);
+  const res = await shopifyQl(site, query, null);
   return res.data;
 };
 
-exports.getOne = async (object_id) => {
-  // Step 1: get the exact variant count so we don't truncate
+exports.getOne = async (site, object_id) => {
   const countQuery = /* GraphQL */ `
     query ProductVariantCount {
       product(id: "${object_id}") {
@@ -165,10 +152,9 @@ exports.getOne = async (object_id) => {
       }
     }
   `;
-  const countRes = await shopifyQl(countQuery, null);
+  const countRes = await shopifyQl(site, countQuery, null);
   const variantCount = countRes.data?.product?.variantsCount?.count ?? 250;
 
-  // Step 2: fetch full product using the real count (Shopify max: 250)
   const query = /* GraphQL */ `
     query OneProduct {
       product(id: "${object_id}") {
@@ -222,7 +208,7 @@ exports.getOne = async (object_id) => {
       }
     }
   `;
-  const res = await shopifyQl(query, null);
+  const res = await shopifyQl(site, query, null);
 
   if (!res.data && res.errors?.length) {
     const messages = res.errors.map((e) => e.message).join("; ");

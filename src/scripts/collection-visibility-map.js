@@ -6,13 +6,12 @@ const logger = require("../utils/logger");
 const MIGRATION_DIR = path.join(__dirname, "../../migration");
 const DATA_DIR = path.join(MIGRATION_DIR, "data");
 
-// Fetch all BC categories (v3, paginated). Returns a flat array with is_visible.
-const fetchBcCategories = async () => {
+const fetchBcCategories = async (site) => {
   const all = [];
   let page = 1;
 
   while (true) {
-    const res = await makeRequest("GET", "/v3/catalog/categories", {
+    const res = await makeRequest(site, "GET", "/v3/catalog/categories", {
       params: { limit: 250, page },
     });
     const items = res.data ?? [];
@@ -24,13 +23,11 @@ const fetchBcCategories = async () => {
   return all;
 };
 
-// Normalise a string for name-matching: lowercase, trim, collapse whitespace.
 const norm = (s) => (s ?? "").toLowerCase().trim().replace(/\s+/g, " ");
 
-exports.mapCollectionVisibility = async () => {
+exports.mapCollectionVisibility = async (site) => {
   const reqId = "collection-visibility-map";
 
-  // ── Load source files ──────────────────────────────────────────
   const collectionsPath = path.join(DATA_DIR, "shopify-collections.json");
   const navMapPath = path.join(DATA_DIR, "nav-collection-map.json");
 
@@ -44,20 +41,16 @@ exports.mapCollectionVisibility = async () => {
   const allCollections = JSON.parse(fs.readFileSync(collectionsPath, "utf8"));
   const { items: navItems } = JSON.parse(fs.readFileSync(navMapPath, "utf8"));
 
-  // ── Build nav collection ID set ────────────────────────────────
-  // A collection is "in nav" if any nav item from either menu matched it.
   const navCollectionIds = new Set(
     navItems.filter((i) => i.is_collection).map((i) => i.collection.id)
   );
 
   logger.info(reqId, `${allCollections.length} Shopify collections | ${navCollectionIds.size} appear in nav`);
 
-  // ── Fetch live BC categories ───────────────────────────────────
   logger.info(reqId, "Fetching BC categories...");
-  const bcCategories = await fetchBcCategories();
+  const bcCategories = await fetchBcCategories(site);
   logger.info(reqId, `${bcCategories.length} BC categories found`);
 
-  // Build BC lookup by normalised name (and by custom_url for secondary matching)
   const bcByName = new Map(bcCategories.map((c) => [norm(c.name), c]));
   const bcByUrl = new Map(
     bcCategories
@@ -68,14 +61,12 @@ exports.mapCollectionVisibility = async () => {
       })
   );
 
-  // ── Map each Shopify collection ────────────────────────────────
   const navCollections = [];
   const hiddenCollections = [];
 
   for (const col of allCollections) {
     const inNav = navCollectionIds.has(col.id);
 
-    // Find matching BC category: name first, then URL handle fallback
     let bcMatch =
       bcByName.get(norm(col.title)) ??
       bcByUrl.get(col.handle) ??
@@ -110,7 +101,6 @@ exports.mapCollectionVisibility = async () => {
     }
   }
 
-  // ── Summary ────────────────────────────────────────────────────
   const missingFromBc = [...navCollections, ...hiddenCollections].filter(
     (e) => e.bc_match === null
   );

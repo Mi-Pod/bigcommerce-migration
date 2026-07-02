@@ -40,40 +40,33 @@ function saveJson(obj) {
   return filePath;
 }
 
-// Export the first metaobject of a given type as a sample.
-exports.exportOne = async ({ type }) => {
+exports.exportOne = async (site, { type }) => {
   if (!type) throw new Error("type is required");
   ensureDirs();
   logger.notice("export-metaobjects", `Fetching one metaobject of type "${type}"...`);
 
-  const page = await getPage(type, 1);
+  const page = await getPage(site, type, 1);
   if (!page.nodes.length) throw new Error(`No metaobjects found for type "${type}"`);
 
   const obj = page.nodes[0];
-  const full = await getOne(obj.id);
+  const full = await getOne(site, obj.id);
   const filePath = saveJson(full);
 
   logger.success("export-metaobjects", `Saved → ${filePath}`);
   return { exported: full, filePath };
 };
 
-// List all metaobject definition types.
-exports.listTypes = async () => {
-  const defs = await getDefinitions();
+exports.listTypes = async (site) => {
+  const defs = await getDefinitions(site);
   logger.notice("export-metaobjects", `Found ${defs.length} metaobject type(s): ${defs.map((d) => d.type).join(", ")}`);
   return defs;
 };
 
-// Bulk export all metaobjects of all types.
-//   type        — if provided, only export that type; otherwise exports all types
-//   batch_size  — instances per page (default 50)
-//   skip        — skip first N instances of each type (0 = no skip)
-//   max_batches — stop after N batches per type (0 = no limit)
-exports.exportAll = async ({ type = null, batch_size = 50, skip = 0, max_batches = 0 } = {}) => {
+exports.exportAll = async (site, { type = null, batch_size = 50, skip = 0, max_batches = 0 } = {}) => {
   ensureDirs();
   const reqId = "export-metaobjects";
 
-  const types = type ? [type] : (await getDefinitions()).map((d) => d.type);
+  const types = type ? [type] : (await getDefinitions(site)).map((d) => d.type);
   logger.notice(reqId, `Exporting ${types.length} type(s): ${types.join(", ")}`);
 
   const summary = { params: { type, batch_size, skip, max_batches }, types: {} };
@@ -86,12 +79,11 @@ exports.exportAll = async ({ type = null, batch_size = 50, skip = 0, max_batches
     let typeExported = 0;
     let typeFailed = 0;
 
-    // Advance cursor past skip
     if (skip > 0) {
       let remaining = skip;
       while (remaining > 0 && hasNextPage) {
         const take = Math.min(remaining, 250);
-        const p = await getPage(t, take, cursor);
+        const p = await getPage(site, t, take, cursor);
         cursor = p.endCursor;
         hasNextPage = p.hasNextPage;
         remaining -= take;
@@ -104,7 +96,7 @@ exports.exportAll = async ({ type = null, batch_size = 50, skip = 0, max_batches
       if (max_batches > 0 && batchNum >= max_batches) break;
       batchNum++;
 
-      const page = await getPage(t, batch_size, cursor);
+      const page = await getPage(site, t, batch_size, cursor);
       cursor = page.endCursor;
       hasNextPage = page.hasNextPage;
 

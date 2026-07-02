@@ -1,8 +1,6 @@
 const { shopifyQl } = require("../api/shopify");
 
-// Fetch one page of all menus in the store.
-// Returns { nodes, hasNextPage, endCursor }.
-exports.getMenusPage = async (first, after = null) => {
+exports.getMenusPage = async (site, first, after = null) => {
   const query = /* GraphQL */ `
     query GetMenusPage($first: Int!, $after: String) {
       menus(first: $first, after: $after) {
@@ -31,7 +29,7 @@ exports.getMenusPage = async (first, after = null) => {
       }
     }
   `;
-  const res = await shopifyQl(query, { first, ...(after ? { after } : {}) });
+  const res = await shopifyQl(site, query, { first, ...(after ? { after } : {}) });
   if (!res.data && res.errors?.length) {
     throw new Error(res.errors.map((e) => e.message).join("; "));
   }
@@ -43,7 +41,7 @@ exports.getMenusPage = async (first, after = null) => {
   };
 };
 
-exports.getMenu = async (id) => {
+exports.getMenu = async (site, id) => {
   const query = /* GraphQL */ `
     query getMenu($id: ID!) {
       menu(id: $id) {
@@ -75,7 +73,7 @@ exports.getMenu = async (id) => {
     }
   `;
 
-  const res = await shopifyQl(query, { id });
+  const res = await shopifyQl(site, query, { id });
 
   if (!res.data && res.errors?.length) {
     const messages = res.errors.map((e) => e.message).join("; ");

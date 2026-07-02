@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const shopify = require("../graphql/products");
 const { collectMetafields } = shopify;
-const imageService = require("../services/bigcommerce/image.service");
+const { images: imageService } = require("@mipod/bigcommerce");
 const CUSTOMER_GROUPS = require("../config/customer-groups");
 const logger = require("../utils/logger");
 
@@ -286,7 +286,7 @@ exports.translateProduct = async () => {
 //    Requires an existing BC product ID.
 //    Output: migration/images.json
 // ─────────────────────────────────────────────────────────────
-exports.migrateImages = async (bcProductId) => {
+exports.migrateImages = async (site, bcProductId) => {
   const reqId = "migrate-images";
 
   if (!bcProductId) throw new Error("bcProductId is required");
@@ -308,7 +308,7 @@ exports.migrateImages = async (bcProductId) => {
     logger.info(reqId, `Uploading image ${i + 1}/${images.length}: ${img.url}`);
 
     try {
-      const result = await imageService.uploadFromUrl(bcProductId, {
+      const result = await imageService.uploadFromUrl(site, bcProductId, {
         image_url: img.url,
         description: img.altText || "",
         is_thumbnail: i === 0,

@@ -9,23 +9,18 @@ const CUSTOMER_METAFIELD_DEFS = [
   { alias: "mf_custom_purchasing_list_subscription",namespace: "custom",        key: "purchasing_list_subscription" },
 ];
 
-// Collect the aliased metafield fields from a customer object into a flat array.
-// Drops any that weren't set on the customer (null positions).
 exports.collectMetafields = (customer) =>
   CUSTOMER_METAFIELD_DEFS.map(({ alias }) => customer[alias]).filter(Boolean);
 
-// Total customer count — lightweight, no customer data fetched.
-exports.getCount = async () => {
-  const res = await shopifyQl(/* GraphQL */ `query { customersCount { count } }`, null);
+exports.getCount = async (site) => {
+  const res = await shopifyQl(site, /* GraphQL */ `query { customersCount { count } }`, null);
   if (!res.data && res.errors?.length) {
     throw new Error(res.errors.map((e) => e.message).join("; "));
   }
   return res.data.customersCount.count;
 };
 
-// Fetch one page of customer stubs (id + email + name + state) for cursor-based iteration.
-// Returns { nodes, hasNextPage, endCursor }.
-exports.getPage = async (first, after = null) => {
+exports.getPage = async (site, first, after = null) => {
   const query = /* GraphQL */ `
     query CustomerPage($first: Int!, $after: String) {
       customers(first: $first, after: $after) {
@@ -34,7 +29,7 @@ exports.getPage = async (first, after = null) => {
       }
     }
   `;
-  const res = await shopifyQl(query, { first, ...(after ? { after } : {}) });
+  const res = await shopifyQl(site, query, { first, ...(after ? { after } : {}) });
   if (!res.data && res.errors?.length) {
     throw new Error(res.errors.map((e) => e.message).join("; "));
   }
@@ -46,14 +41,12 @@ exports.getPage = async (first, after = null) => {
   };
 };
 
-// Advance the cursor by `count` positions without fetching full customer data.
-// Used to implement a `skip` offset before bulk import starts.
-exports.advanceCursor = async (count) => {
+exports.advanceCursor = async (site, count) => {
   let cursor = null;
   let remaining = count;
   while (remaining > 0) {
     const take = Math.min(remaining, 250);
-    const page = await exports.getPage(take, cursor);
+    const page = await exports.getPage(site, take, cursor);
     cursor = page.endCursor;
     remaining -= take;
     if (!page.hasNextPage) break;
@@ -61,8 +54,7 @@ exports.advanceCursor = async (count) => {
   return cursor;
 };
 
-// Fetch a single customer by numeric ID or full GID.
-exports.getOne = async (customerId) => {
+exports.getOne = async (site, customerId) => {
   const id = String(customerId).startsWith("gid://")
     ? customerId
     : `gid://shopify/Customer/${customerId}`;
@@ -145,7 +137,7 @@ exports.getOne = async (customerId) => {
     }
   `;
 
-  const res = await shopifyQl(query, { id });
+  const res = await shopifyQl(site, query, { id });
 
   if (!res.data && res.errors?.length) {
     const messages = res.errors.map((e) => e.message).join("; ");

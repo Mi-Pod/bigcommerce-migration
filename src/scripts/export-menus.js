@@ -37,13 +37,12 @@ function saveJson(node) {
   return filePath;
 }
 
-// Fetch and export a single menu by GID.
-exports.exportOne = async ({ id }) => {
+exports.exportOne = async (site, { id }) => {
   if (!id) throw new Error("id (GID) is required");
   ensureDirs();
   logger.notice("export-menus", `Fetching menu ${id}...`);
 
-  const data = await getMenu(id);
+  const data = await getMenu(site, id);
   const menu = data.menu;
   if (!menu) throw new Error(`Menu not found: ${id}`);
   const filePath = saveJson(menu);
@@ -52,8 +51,7 @@ exports.exportOne = async ({ id }) => {
   return { exported: menu, filePath };
 };
 
-// Bulk export all menus (menus are typically few; fetched in a single pass).
-exports.exportAll = async () => {
+exports.exportAll = async (site) => {
   ensureDirs();
   const reqId = "export-menus";
   logger.notice(reqId, "Fetching all menus...");
@@ -63,7 +61,7 @@ exports.exportAll = async () => {
   let hasNextPage = true;
 
   while (hasNextPage) {
-    const page = await getMenusPage(50, cursor);
+    const page = await getMenusPage(site, 50, cursor);
     cursor = page.endCursor;
     hasNextPage = page.hasNextPage;
     all.push(...page.nodes);

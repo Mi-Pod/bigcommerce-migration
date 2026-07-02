@@ -45,13 +45,12 @@ function saveJson(node) {
   return filePath;
 }
 
-// Fetch and export a single article by GID.
-exports.exportOne = async ({ id }) => {
+exports.exportOne = async (site, { id }) => {
   if (!id) throw new Error("id is required");
   ensureDirs();
   logger.notice("export-articles", `Fetching article ${id}...`);
 
-  const article = await getOne(id);
+  const article = await getOne(site, id);
   if (!article) throw new Error(`Article not found: ${id}`);
   const filePath = saveJson(article);
 
@@ -59,18 +58,13 @@ exports.exportOne = async ({ id }) => {
   return { exported: article, filePath };
 };
 
-// Count total articles.
-exports.countArticles = async () => {
-  const count = await getCount();
+exports.countArticles = async (site) => {
+  const count = await getCount(site);
   logger.notice("export-articles", `Shopify article count: ${count}`);
   return { count };
 };
 
-// Bulk export all articles.
-//   batch_size  — articles per page (default 50)
-//   skip        — number of articles to skip at start
-//   max_batches — stop after N batches (0 = no limit)
-exports.exportAll = async ({ batch_size = 50, skip = 0, max_batches = 0 } = {}) => {
+exports.exportAll = async (site, { batch_size = 50, skip = 0, max_batches = 0 } = {}) => {
   ensureDirs();
   const reqId = "export-articles";
   logger.notice(reqId, `Starting bulk export — batch_size: ${batch_size}, skip: ${skip}, max_batches: ${max_batches || "∞"}`);
@@ -78,12 +72,11 @@ exports.exportAll = async ({ batch_size = 50, skip = 0, max_batches = 0 } = {}) 
   let cursor = null;
   let hasNextPage = true;
 
-  // Advance cursor past skip
   if (skip > 0) {
     let remaining = skip;
     while (remaining > 0 && hasNextPage) {
       const take = Math.min(remaining, 250);
-      const p = await getPage(take, cursor);
+      const p = await getPage(site, take, cursor);
       cursor = p.endCursor;
       hasNextPage = p.hasNextPage;
       remaining -= take;
@@ -99,7 +92,7 @@ exports.exportAll = async ({ batch_size = 50, skip = 0, max_batches = 0 } = {}) 
     if (max_batches > 0 && batchNum >= max_batches) break;
     batchNum++;
 
-    const page = await getPage(batch_size, cursor);
+    const page = await getPage(site, batch_size, cursor);
     cursor = page.endCursor;
     hasNextPage = page.hasNextPage;
 

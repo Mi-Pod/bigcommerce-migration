@@ -1,11 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const customerService = require("../../services/bigcommerce/customer.service");
+const { customers } = require("@mipod/bigcommerce");
 
 // ── Customers ─────────────────────────────────────────────────
 router.get("/", async (req, res) => {
+  const { site, ...params } = req.query;
   try {
-    const data = await customerService.getList(req.query);
+    const data = await customers.getList(site, params);
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -13,8 +14,9 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
+  const { site } = req.query;
   try {
-    const data = await customerService.getOne(req.params.id);
+    const data = await customers.getOne(site, req.params.id);
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -22,8 +24,9 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
+  const { site, ...body } = req.body;
   try {
-    const data = await customerService.create(req.body);
+    const data = await customers.create(site, body);
     res.status(201).json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -31,8 +34,9 @@ router.post("/", async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
+  const { site, ...body } = req.body;
   try {
-    const data = await customerService.update(req.params.id, req.body);
+    const data = await customers.update(site, req.params.id, body);
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -40,8 +44,9 @@ router.put("/:id", async (req, res) => {
 });
 
 router.delete("/:id", async (req, res) => {
+  const { site } = req.query;
   try {
-    await customerService.remove(req.params.id);
+    await customers.remove(site, req.params.id);
     res.status(204).send();
   } catch (e) {
     res.status(500).json({ error: e.message });

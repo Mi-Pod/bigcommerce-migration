@@ -6,26 +6,21 @@ const logger = require("../utils/logger");
 
 const MIGRATION_DIR = path.join(__dirname, "../../migration");
 
-exports.countProducts = async () => {
-  const count = await getCount();
+exports.countProducts = async (site) => {
+  const count = await getCount(site);
   logger.notice("bulk-migrate", `Shopify product count: ${count}`);
   return { count };
 };
 
-// Bulk import with configurable batching.
-//   batch_size  — products per page fetched from Shopify (default 10)
-//   skip        — skip the first N products (0-indexed, uses cursor advance)
-//   max_batches — stop after N batches; 0 = import everything
-exports.importProducts = async ({ batch_size = 10, skip = 0, max_batches = 0 } = {}) => {
+exports.importProducts = async (site, { batch_size = 10, skip = 0, max_batches = 0 } = {}) => {
   const reqId = "bulk-migrate";
 
   logger.notice(reqId, `Starting bulk import — batch_size: ${batch_size}, skip: ${skip}, max_batches: ${max_batches || "∞"}`);
 
-  // Advance cursor past skipped products
   let cursor = null;
   if (skip > 0) {
     logger.info(reqId, `Advancing cursor past ${skip} products...`);
-    cursor = await advanceCursor(skip);
+    cursor = await advanceCursor(site, skip);
     logger.info(reqId, `Cursor advanced — starting from product ${skip + 1}`);
   }
 
@@ -43,7 +38,7 @@ exports.importProducts = async ({ batch_size = 10, skip = 0, max_batches = 0 } =
     batchNum++;
     logger.info(reqId, `Batch ${batchNum}${max_batches ? `/${max_batches}` : ""} — fetching ${batch_size} product IDs...`);
 
-    const page = await getPage(batch_size, cursor);
+    const page = await getPage(site, batch_size, cursor);
     cursor = page.endCursor;
     hasNextPage = page.hasNextPage;
 
@@ -56,7 +51,7 @@ exports.importProducts = async ({ batch_size = 10, skip = 0, max_batches = 0 } =
     for (const stub of active) {
       logger.info(reqId, `  Migrating: "${stub.title}" (${stub.id})`);
       try {
-        const result = await migrateProduct(stub.id, { outputJson: false });
+        const result = await migrateProduct(site, stub.id, { outputJson: false });
         results.push({ status: "success", shopify_id: stub.id, title: stub.title, bc_product_id: result.bc_product_id, action: result.action });
         logger.success(reqId, `  ✓ "${stub.title}" -> bc_id ${result.bc_product_id} (${result.action})`);
       } catch (err) {
